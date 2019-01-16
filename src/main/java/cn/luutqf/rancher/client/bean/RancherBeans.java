@@ -31,12 +31,10 @@ public class RancherBeans {
 
     @Bean
     public Rancher rancher(){
-        Rancher rancher;
         try {
-            rancher = new Rancher(new Rancher.Config(new URL(host+":"+port), accessKey, secretKey));
+           return new Rancher(new Rancher.Config(new URL(host+":"+port), accessKey, secretKey));
         } catch (MalformedURLException e) {
             throw new RancherException(e.getMessage(),RancherException.BEAN_ERROR);
         }
-        return rancher;
     }
 }
