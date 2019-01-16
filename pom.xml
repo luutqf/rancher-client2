@@ -34,6 +34,19 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.github.kod4n/rancher-client -->
+        <dependency>
+            <groupId>com.github.kod4n</groupId>
+            <artifactId>rancher-client</artifactId>
+            <version>1.0.3</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/br.com.basis/rancher-java-sdk -->
+        <!--<dependency>-->
+            <!--<groupId>br.com.basis</groupId>-->
+            <!--<artifactId>rancher-java-sdk</artifactId>-->
+            <!--<version>1.0.0</version>-->
+        <!--</dependency>-->
+
     </dependencies>
 
     <build>
