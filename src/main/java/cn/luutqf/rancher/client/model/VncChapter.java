@@ -19,15 +19,16 @@ import java.util.Objects;
 @AllArgsConstructor
 public class VncChapter extends Chapter {
 
-    private final String bodyYype = "vnc-";
-
-    private final String ContainerType = "docker:";
+    {
+        this.bodyType = "vnc-";
+        this.containerType = "docker:";
+    }
 
     private String password;
 
     private List<Integer> ports;
 
-    private String targetPort;
+
 
     @Override
     public boolean equals(Object o) {

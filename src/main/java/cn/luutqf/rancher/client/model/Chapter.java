@@ -17,6 +17,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Chapter {
 
+    protected String bodyType;
+
+    protected String containerType;
+
     private String id;
 
     private String url;
@@ -26,4 +30,8 @@ public class Chapter {
     private String image;
 
     private String username;
+
+    private String chapterName;
+
+    private String targetPort;
 }

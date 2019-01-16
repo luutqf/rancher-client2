@@ -17,10 +17,14 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class JupyterChapter extends Chapter {
 
+    {
+        this.bodyType = "jupyter-";
+        this.containerType = "docker:";
+    }
 
-    private final String type = "jupyter";
-
-    private final String ContainerType = "docker";
 
     private List<String> files;
+
+
+
 }

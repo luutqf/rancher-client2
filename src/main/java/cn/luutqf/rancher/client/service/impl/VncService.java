@@ -7,6 +7,7 @@ import io.rancher.Rancher;
 import io.rancher.service.ContainerApi;
 import io.rancher.service.ProjectApi;
 import io.rancher.type.Container;
+import io.rancher.type.ContainerLogs;
 import io.rancher.type.InstanceStop;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,7 +47,7 @@ public class VncService implements ChapterService<VncChapter> {
             container.setPorts(Collections.singletonList(vncChapter.getTargetPort()));
             container.setEnvironment(new LinkedHashMap<String, Object>() {{put(VNC_PASSWD, vncChapter.getPassword());}});
             container.setImageUuid(vncChapter.getContainerType() + vncChapter.getImage());
-            container.setName(vncChapter.getBodyYype() + getContainerName(vncChapter));
+            container.setName(vncChapter.getBodyType() + getContainerName(vncChapter));
             return projectApi.createContainer(project, container).execute().body();
         } catch (Exception e) {
             throw new RancherException(e.getMessage(), RancherException.CHAPTER_ERROR);
@@ -70,6 +71,8 @@ public class VncService implements ChapterService<VncChapter> {
     }
 
     public Object stop(VncChapter vncChapter) {
+//        ContainerLogs logs = new ContainerLogs();
+//        containerApi.logs()
         try {
             return containerApi.stop(vncChapter.getId(),new InstanceStop(false,new BigInteger("0"))).execute().body();
         } catch (IOException e) {
