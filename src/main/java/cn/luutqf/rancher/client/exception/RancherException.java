@@ -13,6 +13,7 @@ public class RancherException extends RuntimeException{
 
     public static final Integer BEAN_ERROR = 580;
     public static final Integer CHAPTER_ERROR = 581;
+    public static final Integer JUPYTER_EMPTY = 582;
 
     private Integer code;
 
@@ -23,6 +24,10 @@ public class RancherException extends RuntimeException{
 
     public RancherException(String message) {
         super(message);
+    }
+    public RancherException(Integer code) {
+        super("error");
+        this.code = code;
     }
 
     public Integer getCode() {

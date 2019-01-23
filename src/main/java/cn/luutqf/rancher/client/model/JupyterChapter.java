@@ -25,6 +25,8 @@ public class JupyterChapter extends Chapter {
 
     private List<String> files;
 
+    private String file;
+
 
 
 }

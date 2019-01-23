@@ -2,6 +2,7 @@ package cn.luutqf.rancher.client.web;
 
 import cn.luutqf.rancher.client.constant.Result;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 
@@ -13,14 +14,20 @@ import org.springframework.web.bind.annotation.PutMapping;
 public interface BaseController<T> {
 
     @PostMapping
-    Object create(T t);
+    default Object create(T t){ return null; }
 
     @DeleteMapping
-    Object delete(T t);
+    default Object delete(String id){ return null; }
 
-    @PutMapping("start")
-    Object start(T t);
+    @GetMapping("start")
+    default Object start(String id){ return null; }
 
-    @PutMapping("stop")
-    Object stop(T t);
+    @GetMapping("stop")
+    default Object stop(String id){ return null; }
+
+    @GetMapping("url")
+    default Object getUrl( String id){ return null; }
+
+    @GetMapping
+    default Object find( String id){ return null; }
 }

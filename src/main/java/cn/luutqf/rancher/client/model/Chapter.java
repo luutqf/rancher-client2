@@ -17,6 +17,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Chapter {
 
+    {
+        this.bodyType = "default-";
+        this.containerType = "docker:";
+    }
     protected String bodyType;
 
     protected String containerType;

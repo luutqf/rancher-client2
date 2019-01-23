@@ -1,6 +1,7 @@
 package cn.luutqf.rancher.client.web;
 
-import cn.luutqf.rancher.client.constant.Result;
+import cn.luutqf.rancher.client.exception.RancherException;
+import cn.luutqf.rancher.client.model.Chapter;
 import cn.luutqf.rancher.client.model.VncChapter;
 import cn.luutqf.rancher.client.service.ChapterService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,26 +16,19 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("vnc")
 public class VncController implements BaseController<VncChapter>{
 
-    private final ChapterService<VncChapter> chapterService;
+    private final ChapterService<VncChapter> vncService;
+    private final ChapterService<Chapter> chapterService;
 
     @Autowired
-    public VncController(ChapterService<VncChapter> chapterService) {
+    public VncController(ChapterService<VncChapter> vncService, ChapterService<Chapter> chapterService) {
+        this.vncService = vncService;
         this.chapterService = chapterService;
     }
 
-    public Object create(@RequestBody VncChapter vncChapter) {
-        return chapterService.add(vncChapter);
+    public Object create( VncChapter vncChapter) {
+        String id = vncService.add(vncChapter);
+        System.out.println(id);
+        return chapterService.findUrl(id);
     }
 
-    public Object delete(@RequestBody VncChapter vncChapter) {
-        return chapterService.delete(vncChapter);
-    }
-
-    public Object start(@RequestBody VncChapter vncChapter) {
-        return chapterService.start(vncChapter);
-    }
-
-    public Object stop(@RequestBody VncChapter vncChapter) {
-        return chapterService.stop(vncChapter);
-    }
 }
