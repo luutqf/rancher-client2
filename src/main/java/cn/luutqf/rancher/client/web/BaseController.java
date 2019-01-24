@@ -1,10 +1,8 @@
 package cn.luutqf.rancher.client.web;
 
 import cn.luutqf.rancher.client.constant.Result;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
+import cn.luutqf.rancher.client.model.JupyterChapter;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @Author: ZhenYang
@@ -14,20 +12,27 @@ import org.springframework.web.bind.annotation.PutMapping;
 public interface BaseController<T> {
 
     @PostMapping
-    default Object create(T t){ return null; }
+    Object create(T t);
 
     @DeleteMapping
-    default Object delete(String id){ return null; }
+    Object delete(String id);
+
+    @PostMapping("delete")
+    Object delete(T t);
 
     @GetMapping("start")
-    default Object start(String id){ return null; }
+    Object start(String id);
 
     @GetMapping("stop")
-    default Object stop(String id){ return null; }
+    Object stop(String id);
 
     @GetMapping("url")
-    default Object getUrl( String id){ return null; }
+    Object getUrl( String id);
 
     @GetMapping
-    default Object find( String id){ return null; }
+    Object find( String id);
+
+    @GetMapping("logs")
+    Object logs(String id);
+
 }

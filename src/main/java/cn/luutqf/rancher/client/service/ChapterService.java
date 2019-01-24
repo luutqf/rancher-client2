@@ -5,78 +5,77 @@ import cn.luutqf.rancher.client.model.Chapter;
 import io.rancher.base.TypeCollection;
 import io.rancher.service.ProjectApi;
 import io.rancher.type.Container;
-import io.rancher.type.ContainerLogs;
 import retrofit2.Response;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.List;
+import java.util.Optional;
+import java.util.logging.Logger;
 
 /**
  * @Author: ZhenYang
  * @date: 2019/1/16
  * @description:
  */
-public interface  ChapterService<T extends Chapter> {
+public interface ChapterService<T extends Chapter> extends ContainerService<T> {
 
-    default String add(T t){ return "nq tp tq"; }
+    Optional<String> findUrl(String id);
 
-    default Object delete(String id){ return "nq tp tq"; }
+    Container find(String id);
 
-    default Object start(String id){ return "nq tp tq"; }
+    Boolean deleteChapter(T chapter);
 
-    default Object stop(String id){ return "nq tp tq"; }
-
-    default String findUrl( String id){ return "nq tp tq"; }
-
-    default Container find( String id){ return null; }
-
-    default String getToken(String id){ return null; }
-
-    default  String getContainerName(T t) {
+    default String getContainerName(T t) {
+        Logger log = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
         try {
             Class<?> aClass = null;
-            if(t.getClass() == Chapter.class){
+            if (t.getClass() == Chapter.class) {
                 aClass = t.getClass();
-            }else{
+            } else {
                 aClass = t.getClass().getSuperclass();
             }
+            log.info("Container class type :" +aClass.toString());
             Field usernameF = aClass.getDeclaredField("username");
             Field imageF = aClass.getDeclaredField("image");
             Field chapterNameF = aClass.getDeclaredField("chapterName");
             imageF.setAccessible(true);
             usernameF.setAccessible(true);
             chapterNameF.setAccessible(true);
-            return usernameF.get(t).toString() + "-"+chapterNameF.get(t).toString()+"-" + imageF.get(t).toString().substring(imageF.get(t).toString().indexOf("/") + 1);
+            return usernameF.get(t).toString() + "-" + chapterNameF.get(t).toString() + "-" + imageF.get(t).toString().substring(imageF.get(t).toString().indexOf("/") + 1);
         } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new RancherException(e.getMessage(),RancherException.CHAPTER_ERROR);
+            throw new RancherException(e.getMessage(), RancherException.CHAPTER_ERROR);
         }
     }
-    default String getId(Container container, T t, String project, ProjectApi api) throws IOException {
+
+    default Optional<String> getId(Container container, T t, String project, ProjectApi api) throws IOException {
+        Response<Container> execute = createContainer(container, t, project, api);
+        if (execute.message().startsWith("Unprocessable")) {
+            return Optional.ofNullable(getIdUnique(t,project,api));
+        }
+        if(Optional.ofNullable(execute.body()).isPresent())
+            return Optional.ofNullable(execute.body().getId());
+        return Optional.empty();
+    }
+
+    default Response<Container> createContainer(Container container, T t, String project, ProjectApi api) throws IOException {
         container.setImageUuid(t.getContainerType() + t.getImage());
         container.setName(getContainerName(t));
-        Response<Container> execute = api.createContainer(project, container).execute();
-        // TODO 把422换成message
-        if(execute.code() == 422){
-            return getIdUnique(t,project,api);
-        }
-        container = execute.body();
-        return container != null ? container.getId() : null;
+        return api.createContainer(project, container).execute();
     }
-    default String getIdUnique( T t, String project, ProjectApi api) throws IOException {
+
+
+    default String getIdUnique(T t, String project, ProjectApi api) throws IOException {
         TypeCollection<Container> body = api.listContainers(project).execute().body();
-        if(null == body){
+        if (null == body) {
             return null;
         }
-        for (Container c:body.getData()){
+        for (Container c : body.getData()) {
             boolean name = c.getName().equals(getContainerName(t));
-            if(name){
+            if (name) {
                 return c.getId();
             }
         }
         return null;
     }
-    default Boolean deleteChapter(Chapter chapter){
-        return true;
-    }
+
 }

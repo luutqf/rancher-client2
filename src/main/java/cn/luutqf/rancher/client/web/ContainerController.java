@@ -1,5 +1,6 @@
 package cn.luutqf.rancher.client.web;
 
+import cn.luutqf.rancher.client.entity.Container;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -10,7 +11,46 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("container")
-public class ContainerController {
+public class ContainerController implements BaseController<Container> {
 
 
+    @Override
+    public Object create(Container container) {
+        return null;
+    }
+
+    @Override
+    public Object delete(String id) {
+        return null;
+    }
+
+    @Override
+    public Object delete(Container container) {
+        return null;
+    }
+
+    @Override
+    public Object start(String id) {
+        return null;
+    }
+
+    @Override
+    public Object stop(String id) {
+        return null;
+    }
+
+    @Override
+    public Object getUrl(String id) {
+        return null;
+    }
+
+    @Override
+    public Object find(String id) {
+        return null;
+    }
+
+    @Override
+    public Object logs(String id) {
+        return null;
+    }
 }

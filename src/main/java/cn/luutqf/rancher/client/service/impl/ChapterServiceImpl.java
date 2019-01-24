@@ -20,8 +20,11 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static cn.luutqf.rancher.client.constant.BasicParameter.MaxRequestTime;
 
 /**
  * @Author: ZhenYang
@@ -41,6 +44,11 @@ public class ChapterServiceImpl implements ChapterService<Chapter> {
     public ChapterServiceImpl(Rancher rancher) {
         projectApi = rancher.type(ProjectApi.class);
         containerApi = rancher.type(ContainerApi.class);
+    }
+
+    @Override
+    public Optional<String> add(Chapter chapter) {
+        return Optional.empty();
     }
 
     public Object delete(String id) {
@@ -68,24 +76,25 @@ public class ChapterServiceImpl implements ChapterService<Chapter> {
     }
 
 
-
     @Override
-    public String findUrl(String id) {
-        String url = null;
-        int count = 10;
-        do {
+    public Optional<String> findUrl(String id) {
+        String url = "";
+        //todo 函数式编程
+        for (int i = 10; i < MaxRequestTime && StringUtils.isEmpty(url); i+=i) {
             url = findUrlUtil(id);
             try {
-                Thread.sleep(count+=10);
+                Thread.sleep(i);
             } catch (InterruptedException e) {
                 throw new RancherException(e.getMessage(), RancherException.CHAPTER_ERROR);
             }
-        }while (null==url&&count<10000);
-        return url;
+        }
+        return Optional.ofNullable(url);
 
     }
-    private String findUrlUtil(String id){
+
+    private String findUrlUtil(String id) {
         Map map = (Map) Objects.requireNonNull(find(id)).getData().get("fields");
+        //todo 统一正则
         List ports = (List) map.get("ports");
         Pattern p = Pattern.compile(":.?\\d+");
         Matcher m = p.matcher(ports.get(0).toString());
@@ -96,7 +105,7 @@ public class ChapterServiceImpl implements ChapterService<Chapter> {
 
 
     public Container find(String id) {
-        if(StringUtils.isEmpty(id)){
+        if (StringUtils.isEmpty(id)) {
             return null;
         }
         try {
@@ -105,6 +114,7 @@ public class ChapterServiceImpl implements ChapterService<Chapter> {
             throw new RancherException(e.getMessage(), RancherException.CHAPTER_ERROR);
         }
     }
+
 
     @Override
     public Boolean deleteChapter(Chapter chapter) {

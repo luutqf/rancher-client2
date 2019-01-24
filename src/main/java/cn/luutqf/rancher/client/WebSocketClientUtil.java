@@ -1,6 +1,7 @@
 package cn.luutqf.rancher.client;
 
 import cn.luutqf.rancher.client.service.TokenService;
+import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_6455;
 import org.java_websocket.framing.Framedata;
@@ -21,6 +22,7 @@ import java.util.regex.Pattern;
  * @Description
  */
 @Component
+@Slf4j
 public class WebSocketClientUtil {
 
 
@@ -35,7 +37,7 @@ public class WebSocketClientUtil {
 
                 @Override
                 public void onOpen(ServerHandshake serverHandshake) {
-                    System.out.println("打开链接");
+                    log.info("打开链接:{}",serverHandshake.getHttpStatus());
                 }
 
                 @Override
@@ -65,18 +67,19 @@ public class WebSocketClientUtil {
 
                 @Override
                 public void onClose(int i, String s, boolean b) {
-                    System.out.println("链接已关闭");
+                    log.info("链接已关闭:{}",s);
                 }
 
 
                 @Override
                 public void onError(Exception e) {
                     e.printStackTrace();
-                    System.out.println("发生错误已关闭");
+                    log.error("发生错误已关闭:{}",e.getMessage());
                 }
             };
         } catch (URISyntaxException e) {
             e.printStackTrace();
+            log.error("初始化发生错误:{}",e.getMessage());
         }
         client.connect();
         return client;
