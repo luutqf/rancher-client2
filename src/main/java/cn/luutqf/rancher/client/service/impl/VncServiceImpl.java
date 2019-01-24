@@ -31,7 +31,7 @@ import static cn.luutqf.rancher.client.constant.Constants.VNC_PASSWD;
  * @description:
  */
 @Service
-public class VncServiceImpl  implements VncService {
+public class VncServiceImpl implements VncService {
 
     @Value("${rancher.projectId}")
     private String project;
@@ -47,14 +47,12 @@ public class VncServiceImpl  implements VncService {
     }
 
     public Optional<String> add(VncChapter vncChapter) {
-        try {
-            Container container = new Container();
-            container.setPorts(Collections.singletonList(vncChapter.getTargetPort()));
-            container.setEnvironment(new LinkedHashMap<String, Object>() {{put(VNC_PASSWD, vncChapter.getPassword());}});
-            return getId(container, vncChapter, project, projectApi);
-        } catch (Exception e) {
-            throw new RancherException(e.getMessage(), RancherException.CHAPTER_ERROR);
-        }
+        Container container = new Container();
+        container.setPorts(Collections.singletonList(vncChapter.getTargetPort()));
+        container.setEnvironment(new LinkedHashMap<String, Object>() {{
+            put(VNC_PASSWD, vncChapter.getPassword());
+        }});
+        return getId(container, vncChapter, project, projectApi);
     }
 
     @Override
@@ -72,14 +70,13 @@ public class VncServiceImpl  implements VncService {
         return chapterService.stop(id);
     }
 
-
     @Override
     public Optional<String> findUrl(String id) {
         return chapterService.findUrl(id);
     }
 
     @Override
-    public Container find(String id) {
+    public Optional<Container> find(String id) {
         return chapterService.find(id);
     }
 

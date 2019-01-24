@@ -13,7 +13,14 @@ public class RancherException extends RuntimeException{
 
     public static final Integer BEAN_ERROR = 580;
     public static final Integer CHAPTER_ERROR = 581;
+    public static final Integer STOP_ERROR = 585;
+    public static final Integer START_ERROR = 586;
+    public static final Integer THREAD_ERROR = 588;
+    public static final Integer DELETE_ERROR = 587;
     public static final Integer JUPYTER_EMPTY = 582;
+    public static final Integer WEB_SOCKET_ERROR = 589;
+    public static final Integer CREATE_CHAPTER_ERROR = 583;
+    public static final Integer LIST_CONTAINER_ERROR = 584;
 
     private Integer code;
 
@@ -26,7 +33,7 @@ public class RancherException extends RuntimeException{
         super(message);
     }
     public RancherException(Integer code) {
-        super("error");
+        super("error code : "+code);
         this.code = code;
     }
 

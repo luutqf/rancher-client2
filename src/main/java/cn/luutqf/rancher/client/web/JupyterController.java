@@ -29,7 +29,7 @@ public class JupyterController implements BaseController<JupyterChapter>{
         this.chapterService = chapterService;
     }
 
-    public Object create(@RequestBody JupyterChapter jupyterChapter) {
+    public Object create( JupyterChapter jupyterChapter) {
         Optional<String> add = jupyterService.add(jupyterChapter);
         if (add.isPresent()){
             return getUrl(add.get());
@@ -56,11 +56,8 @@ public class JupyterController implements BaseController<JupyterChapter>{
         return Optional.empty();
     }
 
-
     public Object getUrl(String id) {
         Optional<String> token = jupyterService.getToken(id);
-
-//        String token = .get();
         Optional<String> url = chapterService.findUrl(id);
         if(!token.isPresent()||!url.isPresent()){
             return Optional.empty();
@@ -78,7 +75,7 @@ public class JupyterController implements BaseController<JupyterChapter>{
         return chapterService.find(id);
     }
 
-    public Object delete(@RequestBody JupyterChapter chapter){
+    public Object delete( JupyterChapter chapter){
         return jupyterService.deleteChapter(chapter);
     }
 }

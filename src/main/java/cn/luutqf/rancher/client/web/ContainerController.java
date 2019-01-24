@@ -16,41 +16,41 @@ public class ContainerController implements BaseController<Container> {
 
     @Override
     public Object create(Container container) {
-        return null;
+        return "";
     }
 
     @Override
     public Object delete(String id) {
-        return null;
+        return "";
     }
 
     @Override
     public Object delete(Container container) {
-        return null;
+        return "";
     }
 
     @Override
     public Object start(String id) {
-        return null;
+        return "";
     }
 
     @Override
     public Object stop(String id) {
-        return null;
+        return "";
     }
 
     @Override
     public Object getUrl(String id) {
-        return null;
+        return "";
     }
 
     @Override
     public Object find(String id) {
-        return null;
+        return "";
     }
 
     @Override
     public Object logs(String id) {
-        return null;
+        return "";
     }
 }

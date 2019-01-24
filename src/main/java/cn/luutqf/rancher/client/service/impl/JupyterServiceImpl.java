@@ -1,13 +1,11 @@
 package cn.luutqf.rancher.client.service.impl;
 
-import cn.luutqf.rancher.client.WebSocketClientUtil;
+import cn.luutqf.rancher.client.utils.WebSocketClientUtil;
 import cn.luutqf.rancher.client.exception.RancherException;
 import cn.luutqf.rancher.client.model.Chapter;
 import cn.luutqf.rancher.client.model.JupyterChapter;
 import cn.luutqf.rancher.client.service.*;
-import groovy.xml.Entity;
 import io.rancher.Rancher;
-import io.rancher.service.ContainerApi;
 import io.rancher.service.ProjectApi;
 import io.rancher.type.Container;
 import io.rancher.type.ContainerLogs;
@@ -18,18 +16,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestTemplate;
-import retrofit2.Response;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static cn.luutqf.rancher.client.constant.BasicParameter.*;
-import static groovy.xml.Entity.copy;
 
 /**
  * @Author: ZhenYang
@@ -47,38 +40,29 @@ public class JupyterServiceImpl implements JupyterService {
 
     private final FileService fileService;
 
-//    private final ContainerApi containerApi;
-
     private final ChapterService<Chapter> chapterService;
-
 
     @Autowired
     public JupyterServiceImpl(Rancher rancher, ChapterService<Chapter> chapterService, FileService fileService) {
         projectApi = rancher.type(ProjectApi.class);
-//        containerApi = rancher.type(ContainerApi.class);
         this.chapterService = chapterService;
         this.fileService = fileService;
     }
 
     public Optional<String> add(JupyterChapter jupyterChapter) {
         Container container = new Container();
-        //todo 异常捕获过于笼统，难于调试
-        try {
-            container.setPorts(Collections.singletonList(jupyterChapter.getTargetPort()));
-            container.setDataVolumes(Collections.singletonList("test/" + jupyterChapter.getUsername() + "/" + jupyterChapter.getChapterName() + ":/home/jovyan/work/"));
-            container.setVolumeDriver("rancher-nfs");
-            Boolean mkdir = fileService.create("/nfs/test/" + jupyterChapter.getUsername() + "/" + jupyterChapter.getChapterName());
-            log.info("创建文件夹：{}", mkdir);
-            if (null != mkdir && mkdir) {
-                //todo 这里应把参数中的文件路径写下,获取文件
-                Boolean copy = fileService.copy("/nfs/test/20140101/chapter/Untitled.ipynb", NfsPrefix + jupyterChapter.getUsername() + "/" + jupyterChapter.getChapterName() + "/Untitled.ipynb");
-                log.info("创建文件操作：{}", copy);
-            }
-            fileService.chmod(NfsPrefix);
-            return getId(container, jupyterChapter, project, projectApi);
-        } catch (IOException e) {
-            throw new RancherException(e.getMessage(), RancherException.CHAPTER_ERROR);
+        container.setPorts(Collections.singletonList(jupyterChapter.getTargetPort()));
+        container.setDataVolumes(Collections.singletonList("test/" + jupyterChapter.getUsername() + "/" + jupyterChapter.getChapterName() + ":/home/jovyan/work/"));
+        container.setVolumeDriver("rancher-nfs");
+        Boolean mkdir = fileService.create(NfsPrefix + jupyterChapter.getUsername() + "/" + jupyterChapter.getChapterName());
+        log.info("创建文件夹：{}", mkdir);
+        if (Optional.ofNullable(mkdir).isPresent() && mkdir) {
+            //todo 这里应把参数中的文件路径写下,获取文件
+            Boolean copy = fileService.copy("/nfs/test/20140101/chapter/Untitled.ipynb", NfsPrefix + jupyterChapter.getUsername() + "/" + jupyterChapter.getChapterName() + "/Untitled.ipynb");
+            log.info("创建文件操作：{}", copy);
         }
+        fileService.chmod(NfsPrefix);
+        return getId(container, jupyterChapter, project, projectApi);
     }
 
     @Override
@@ -99,37 +83,49 @@ public class JupyterServiceImpl implements JupyterService {
     public Optional<String> getToken(String id) {
         try {
             ContainerLogs logs = new ContainerLogs();
-            HostAccess body = null;
-            int count = 100;
+            HostAccess body;
+            int count = MinRequestTime;
             Map dockerContainer;
-            String containerId = null;
+            String containerId = "";
             Container container;
 
             log.info("Rancher container ID：{}", id);
             //todo 函数式编程
-            for (int i = 10; i < MaxRequestTime; i += i) {
-                container = chapterService.find(id);
+            for (int i = MinRequestTime; i < MaxRequestTime; i += i) {
+                Optional<Container> container1 = chapterService.find(id);
+                if (!container1.isPresent()) {
+                    Thread.sleep(i);
+                    continue;
+                }
+                container = container1.get();
                 Map<String, Object> data = container.getData();
                 dockerContainer = (Map) data.get("dockerContainer");
-                if (null != dockerContainer) {
+                if (Optional.ofNullable(dockerContainer).isPresent()) {
                     containerId = dockerContainer.get("Id").toString();
+                    log.info("docker container ID：{}", containerId);
                     break;
                 }
                 Thread.sleep(i);
             }
-            log.info("docker container ID：{}", containerId);
-            if(!Optional.ofNullable(containerId).isPresent())
+
+            if (StringUtils.isEmpty(containerId))
                 throw new RancherException(RancherException.JUPYTER_EMPTY);
 
-            while ((null == body) && count < MaxRequestTime) {
+            do {
                 body = projectApi.logsContainer(project, id, logs).execute().body();
                 Thread.sleep(count += count);
-            }
+            } while (!Optional.ofNullable(body).isPresent() && count < MaxRequestTime);
 
             if (Optional.ofNullable(body).isPresent()) {
-                WebSocketClient webSocketClient = WebSocketClientUtil.getWebSocketClient(body.getUrl() + "?token=" + body.getToken());
+                WebSocketClient webSocketClient;
+                Optional<WebSocketClient> optional = WebSocketClientUtil.getWebSocketClient(body.getUrl() + "?token=" + body.getToken());
+                if (optional.isPresent()) {
+                    webSocketClient = optional.get();
+                } else {
+                    throw new RancherException(RancherException.WEB_SOCKET_ERROR);
+                }
                 while (!webSocketClient.isClosed() && count < MaxRequestTime) {
-                    Thread.sleep(count += 100);
+                    Thread.sleep(count += count);
                 }
             } else {
                 throw new RancherException(RancherException.JUPYTER_EMPTY);
@@ -139,11 +135,9 @@ public class JupyterServiceImpl implements JupyterService {
         } catch (IOException e) {
             throw new RancherException(e.getMessage(), RancherException.CHAPTER_ERROR);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            throw new RancherException(e.getMessage(), RancherException.THREAD_ERROR);
         }
-        return Optional.empty();
     }
-
 
     @Override
     public Optional<String> findUrl(String id) {
@@ -151,14 +145,14 @@ public class JupyterServiceImpl implements JupyterService {
     }
 
     @Override
-    public Container find(String id) {
+    public Optional<Container> find(String id) {
         return chapterService.find(id);
     }
 
     @Override
     public Boolean deleteChapter(JupyterChapter chapter) {
-        Boolean delete = fileService.delete("/nfs/test/" + chapter.getUsername() + "/" + chapter.getChapterName());
-        log.info("delete user：{}の{} file:{}",chapter.getUsername(),chapter.getChapterName(),delete);
+        Boolean delete = fileService.delete(NfsPrefix + chapter.getUsername() + "/" + chapter.getChapterName());
+        log.info("delete user：{}の{} file:{}", chapter.getUsername(), chapter.getChapterName(), delete);
         return chapterService.deleteChapter(chapter);
     }
 }

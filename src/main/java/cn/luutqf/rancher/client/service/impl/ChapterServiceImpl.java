@@ -17,14 +17,12 @@ import retrofit2.Response;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static cn.luutqf.rancher.client.constant.BasicParameter.MaxRequestTime;
+import static cn.luutqf.rancher.client.constant.BasicParameter.MinRequestTime;
 
 /**
  * @Author: ZhenYang
@@ -55,7 +53,7 @@ public class ChapterServiceImpl implements ChapterService<Chapter> {
         try {
             return projectApi.deleteContainer(project, id).execute().body();
         } catch (IOException e) {
-            throw new RancherException(e.getMessage(), RancherException.CHAPTER_ERROR);
+            throw new RancherException(e.getMessage(), RancherException.DELETE_ERROR);
         }
     }
 
@@ -63,7 +61,7 @@ public class ChapterServiceImpl implements ChapterService<Chapter> {
         try {
             return containerApi.start(id).execute().body();
         } catch (IOException e) {
-            throw new RancherException(e.getMessage(), RancherException.CHAPTER_ERROR);
+            throw new RancherException(e.getMessage(), RancherException.START_ERROR);
         }
     }
 
@@ -71,56 +69,65 @@ public class ChapterServiceImpl implements ChapterService<Chapter> {
         try {
             return containerApi.stop(id, new InstanceStop(false, new BigInteger("0"))).execute().body();
         } catch (IOException e) {
-            throw new RancherException(e.getMessage(), RancherException.CHAPTER_ERROR);
+            throw new RancherException(e.getMessage(), RancherException.STOP_ERROR);
         }
     }
 
-
     @Override
     public Optional<String> findUrl(String id) {
-        String url = "";
-        //todo 函数式编程
-        for (int i = 10; i < MaxRequestTime && StringUtils.isEmpty(url); i+=i) {
+        Optional<String> url;
+        int i = MinRequestTime;
+        do{
             url = findUrlUtil(id);
             try {
                 Thread.sleep(i);
             } catch (InterruptedException e) {
                 throw new RancherException(e.getMessage(), RancherException.CHAPTER_ERROR);
             }
+        }while ((i+=i)<MaxRequestTime&&!url.isPresent());
+        return url;
+    }
+
+    private Optional<String> findUrlUtil(String id) {
+        Optional<Container> container = find(id);
+        Map map = new HashMap();
+        List ports = new ArrayList();
+        if(container.isPresent()) {
+            Map data = container.get().getData();
+            if(data.containsKey("fields"))
+                map =(Map) data.get("fields");
         }
-        return Optional.ofNullable(url);
-
+        if (map.containsKey("ports")) {
+            ports = (List) map.get("ports");
+        }
+        if(!ports.isEmpty()) {
+            Pattern p = Pattern.compile(":.?\\d+");
+            Matcher m = p.matcher(ports.get(0).toString());
+            if (m.find()){
+                if (map.containsKey("dockerHostIp"))
+                    return Optional.of("http://" + map.get("dockerHostIp") + m.group(0));
+            }
+        }
+        return Optional.empty();
     }
 
-    private String findUrlUtil(String id) {
-        Map map = (Map) Objects.requireNonNull(find(id)).getData().get("fields");
-        //todo 统一正则
-        List ports = (List) map.get("ports");
-        Pattern p = Pattern.compile(":.?\\d+");
-        Matcher m = p.matcher(ports.get(0).toString());
-        if (m.find())
-            return "http://" + map.get("dockerHostIp") + m.group(0);
-        return null;
-    }
-
-
-    public Container find(String id) {
+    public Optional<Container> find(String id) {
         if (StringUtils.isEmpty(id)) {
-            return null;
+            return Optional.empty();
         }
         try {
-            return containerApi.findById(id).execute().body();
+            return Optional.ofNullable(containerApi.findById(id).execute().body());
         } catch (IOException e) {
             throw new RancherException(e.getMessage(), RancherException.CHAPTER_ERROR);
         }
     }
 
-
     @Override
     public Boolean deleteChapter(Chapter chapter) {
         try {
-            String idUnique = getIdUnique(chapter, project, projectApi);
-            projectApi.deleteContainer(project, idUnique).execute();
+            Optional<String> idUnique = getIdUnique(chapter, project, projectApi);
+            if (idUnique.isPresent())
+                projectApi.deleteContainer(project, idUnique.get()).execute();
         } catch (IOException e) {
             return false;
         }

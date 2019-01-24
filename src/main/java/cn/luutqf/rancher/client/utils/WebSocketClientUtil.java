@@ -1,4 +1,4 @@
-package cn.luutqf.rancher.client;
+package cn.luutqf.rancher.client.utils;
 
 import cn.luutqf.rancher.client.service.TokenService;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +13,7 @@ import javax.servlet.http.HttpSession;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,18 +27,18 @@ import java.util.regex.Pattern;
 public class WebSocketClientUtil {
 
 
-    public static WebSocketClient getWebSocketClient(String uri) {
-        WebSocketClient client = null;
+    public static Optional<WebSocketClient> getWebSocketClient(String uri) {
+        WebSocketClient client ;
 
         try {
             client = new WebSocketClient(new URI(uri), new Draft_6455()) {
                 String key = "";
-                Boolean is = false;
+                int isToken = 0;
                 int count = 0;
 
                 @Override
                 public void onOpen(ServerHandshake serverHandshake) {
-                    log.info("打开链接:{}",serverHandshake.getHttpStatus());
+                    log.info("打开链接:{}", serverHandshake.getHttpStatus());
                 }
 
                 @Override
@@ -47,19 +48,19 @@ public class WebSocketClientUtil {
                     Matcher m = p2.matcher(s);
                     if (m.find()) {
                         key = m.group(1);
-                        is = true;
+                        isToken = 1;
                     }
                     m = p.matcher(s);
                     if (m.find()) {
                         TokenService.map.put(key, m.group(0));
-                        if(null == is){
+                        if (isToken == 2) {
                             return;
                         }
-                        if (is) {
-                            is = null;
+                        if (isToken == 1) {
+                            isToken = 2;
                         }
                     }
-                    if (null == is || count >= 16) {
+                    if (isToken == 2 || count >= 16) {
                         this.close();
                     }
                     count++;
@@ -67,21 +68,23 @@ public class WebSocketClientUtil {
 
                 @Override
                 public void onClose(int i, String s, boolean b) {
-                    log.info("链接已关闭:{}",s);
+                    log.info("链接已关闭:{}", s);
                 }
 
 
                 @Override
                 public void onError(Exception e) {
                     e.printStackTrace();
-                    log.error("发生错误已关闭:{}",e.getMessage());
+                    log.error("发生错误已关闭:{}", e.getMessage());
                 }
             };
+            client.connect();
+            return Optional.of(client);
         } catch (URISyntaxException e) {
             e.printStackTrace();
-            log.error("初始化发生错误:{}",e.getMessage());
+            log.error("初始化发生错误:{}", e.getMessage());
         }
-        client.connect();
-        return client;
+
+        return Optional.empty();
     }
 }

@@ -28,7 +28,7 @@ public class VncController implements BaseController<VncChapter>{
         this.chapterService = chapterService;
     }
 
-    public Object create(@RequestBody VncChapter vncChapter) {
+    public Object create( VncChapter vncChapter) {
         Optional<String> add = vncService.add(vncChapter);
         if(add.isPresent()){
             return chapterService.findUrl(add.get());
@@ -68,7 +68,7 @@ public class VncController implements BaseController<VncChapter>{
 
     @Override
     public Object logs(String id) {
-        return null;
+        return "";
     }
 
 }
