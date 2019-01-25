@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("chapter")
 @Api("chapter api")
-public class ChapterController implements BaseController<Chapter> {
+public class ChapterController implements ChapterBaseController<Chapter> {
 
     private final ChapterService<Chapter> chapterService;
 
@@ -38,10 +38,11 @@ public class ChapterController implements BaseController<Chapter> {
 
     @ApiOperation(value = "get url for chapter")
     public Object getUrl(String id) {
-        return chapterService.findUrl(id);
+        return chapterService.findChapterUrl(id);
     }
+
     public Object find(String id) {
-        return chapterService.find(id);
+        return chapterService.findById(id);
     }
 
     @Override
@@ -51,13 +52,15 @@ public class ChapterController implements BaseController<Chapter> {
 
     @Override
     public Object create(Chapter chapter) {
-        return chapterService.add(chapter);
+        return chapterService.createChapter(chapter);
     }
 
+    @Override
     public Object delete(String id) {
         return chapterService.delete(id);
     }
 
+    @Override
     public Object delete(Chapter chapter){
         return chapterService.deleteChapter(chapter);
     }

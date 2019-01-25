@@ -7,6 +7,6 @@ import java.util.LinkedHashMap;
  * @date: 2019/1/17
  * @description:
  */
-public class TokenService {
-    public static LinkedHashMap<String,String> map = new LinkedHashMap<>();
+public class LogsService {
+
 }

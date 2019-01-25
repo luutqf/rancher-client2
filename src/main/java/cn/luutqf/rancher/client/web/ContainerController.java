@@ -1,6 +1,6 @@
 package cn.luutqf.rancher.client.web;
 
-import cn.luutqf.rancher.client.entity.Container;
+import cn.luutqf.rancher.client.entity.MyContainer;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -11,21 +11,15 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("container")
-public class ContainerController implements BaseController<Container> {
+public class ContainerController implements ContainerBaseController<MyContainer> {
 
 
     @Override
-    public Object create(Container container) {
+    public Object create(MyContainer container) {
         return "";
     }
-
     @Override
     public Object delete(String id) {
-        return "";
-    }
-
-    @Override
-    public Object delete(Container container) {
         return "";
     }
 
@@ -36,11 +30,6 @@ public class ContainerController implements BaseController<Container> {
 
     @Override
     public Object stop(String id) {
-        return "";
-    }
-
-    @Override
-    public Object getUrl(String id) {
         return "";
     }
 

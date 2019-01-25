@@ -13,4 +13,10 @@ public class BasicParameter {
     public static final int MaxRequestTime = 10000;
     public static final int MinRequestTime = 10;
     public static final String NfsPrefix = "/nfs/test/";
+    public static final String NfsWorkSpace = "test/";
+    public static final String JupyterUrlPrefix = "/tree/work/";
+    public static final String JupyterDefaultFile = "default.ipynb";
+    public static final String RancherVolumeDriver = "rancher-nfs";
+    public static final String JupyterWorkSpace = "/home/jovyan/work/";
+    public static final String ContainerTTL = "ttl";
 }

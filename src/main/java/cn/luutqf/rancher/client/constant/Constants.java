@@ -7,4 +7,8 @@ package cn.luutqf.rancher.client.constant;
  */
 public class Constants {
     public static final String VNC_PASSWD = "HTTP_PASSWORD";
+    public static final String VNC_TYPE = "vnc";
+    public static final String JUPYTER_TYPE = "jupyter";
+    public static final String CONTAINER_TYPE = "default";
+
 }

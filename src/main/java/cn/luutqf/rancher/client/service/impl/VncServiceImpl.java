@@ -1,28 +1,23 @@
 package cn.luutqf.rancher.client.service.impl;
 
-import cn.luutqf.rancher.client.exception.RancherException;
+import cn.luutqf.rancher.client.entity.MyContainer;
 import cn.luutqf.rancher.client.model.Chapter;
 import cn.luutqf.rancher.client.model.VncChapter;
-import cn.luutqf.rancher.client.service.ChapterAbstract;
 import cn.luutqf.rancher.client.service.ChapterService;
+import cn.luutqf.rancher.client.service.ContainerService;
 import cn.luutqf.rancher.client.service.VncService;
 import io.rancher.Rancher;
-import io.rancher.base.TypeCollection;
-import io.rancher.service.ContainerApi;
 import io.rancher.service.ProjectApi;
 import io.rancher.type.Container;
-import io.rancher.type.ContainerLogs;
-import io.rancher.type.InstanceStop;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import retrofit2.Call;
 import retrofit2.Response;
 
-import java.io.IOException;
-import java.math.BigInteger;
 import java.util.*;
 
+import static cn.luutqf.rancher.client.constant.BasicParameter.*;
+import static cn.luutqf.rancher.client.constant.BasicParameter.RancherVolumeDriver;
 import static cn.luutqf.rancher.client.constant.Constants.VNC_PASSWD;
 
 /**
@@ -30,7 +25,7 @@ import static cn.luutqf.rancher.client.constant.Constants.VNC_PASSWD;
  * @date: 2019/1/16
  * @description:
  */
-@Service
+@Service("VncServiceImpl")
 public class VncServiceImpl implements VncService {
 
     @Value("${rancher.projectId}")
@@ -40,19 +35,37 @@ public class VncServiceImpl implements VncService {
 
     private final ChapterService<Chapter> chapterService;
 
+
     @Autowired
     public VncServiceImpl(Rancher rancher, ChapterService<Chapter> chapterService) {
         projectApi = rancher.type(ProjectApi.class);
         this.chapterService = chapterService;
     }
 
-    public Optional<String> add(VncChapter vncChapter) {
-        Container container = new Container();
-        container.setPorts(Collections.singletonList(vncChapter.getTargetPort()));
-        container.setEnvironment(new LinkedHashMap<String, Object>() {{
-            put(VNC_PASSWD, vncChapter.getPassword());
-        }});
-        return getId(container, vncChapter, project, projectApi);
+    public Optional<String> createChapter(VncChapter vncChapter) {
+        Optional<String> chapterContainerName = getChapterContainerName(vncChapter);
+        MyContainer build = MyContainer.builder()
+            .ports(Collections.singletonList(vncChapter.getTargetPort()))
+            .labels(new LinkedHashMap<String, Object>() {{
+                put(ContainerTTL, vncChapter.getTtl());
+            }})
+            .environment(new LinkedHashMap<String, Object>() {{
+                put(VNC_PASSWD, vncChapter.getPassword());
+            }})
+            .imageUuid(vncChapter.getContainerType() + vncChapter.getImage())
+            .build();
+        chapterContainerName.ifPresent(build::setName);
+        Optional<String> s = add(build).map(Container::getId);
+//        if(s.isPresent()){
+//
+//        }
+        return s;
+    }
+
+
+    @Override
+    public Optional<Container> add(MyContainer myContainer) {
+        return chapterService.add(myContainer);
     }
 
     @Override
@@ -71,18 +84,38 @@ public class VncServiceImpl implements VncService {
     }
 
     @Override
-    public Optional<String> findUrl(String id) {
-        return chapterService.findUrl(id);
+    public Object logs(String id) {
+        return null;
     }
 
     @Override
-    public Optional<Container> find(String id) {
-        return chapterService.find(id);
+    public Optional<String> findChapterUrl(String id) {
+        return chapterService.findChapterUrl(id);
+    }
+
+    @Override
+    public Optional<Container> findById(String id) {
+        return chapterService.findById(id);
+    }
+
+    @Override
+    public Optional<Container> findByName(String name) {
+        return chapterService.findByName(name);
     }
 
     @Override
     public Boolean deleteChapter(VncChapter chapter) {
         return chapterService.deleteChapter(chapter);
+    }
+
+    @Override
+    public Optional<String> getChapterContainerName(VncChapter vncChapter) {
+        return chapterService.getChapterContainerName(vncChapter);
+    }
+
+    @Override
+    public Optional<String> getChapterId(Response<Container> execute, VncChapter vncChapter, String project, ProjectApi api) {
+        return chapterService.getChapterId(execute,vncChapter,project,projectApi);
     }
 
 

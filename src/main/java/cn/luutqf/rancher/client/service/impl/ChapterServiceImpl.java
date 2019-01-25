@@ -1,14 +1,17 @@
 package cn.luutqf.rancher.client.service.impl;
 
+import cn.luutqf.rancher.client.entity.MyContainer;
 import cn.luutqf.rancher.client.exception.RancherException;
 import cn.luutqf.rancher.client.model.Chapter;
 import cn.luutqf.rancher.client.service.ChapterService;
+import cn.luutqf.rancher.client.service.ContainerService;
 import io.rancher.Rancher;
 import io.rancher.service.ContainerApi;
 import io.rancher.service.ProjectApi;
 import io.rancher.type.Container;
 import io.rancher.type.Instance;
 import io.rancher.type.InstanceStop;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -29,7 +32,8 @@ import static cn.luutqf.rancher.client.constant.BasicParameter.MinRequestTime;
  * @date: 2019/1/17
  * @description:
  */
-@Service
+@Slf4j
+@Service("ChapterServiceImpl")
 public class ChapterServiceImpl implements ChapterService<Chapter> {
 
     @Value("${rancher.projectId}")
@@ -37,73 +41,77 @@ public class ChapterServiceImpl implements ChapterService<Chapter> {
 
     private final ProjectApi projectApi;
     private final ContainerApi containerApi;
+    private final ContainerService<MyContainer> containerService;
 
     @Autowired
-    public ChapterServiceImpl(Rancher rancher) {
+    public ChapterServiceImpl(Rancher rancher, ContainerService<MyContainer> containerService) {
         projectApi = rancher.type(ProjectApi.class);
         containerApi = rancher.type(ContainerApi.class);
+        this.containerService = containerService;
     }
 
     @Override
-    public Optional<String> add(Chapter chapter) {
+    public Optional<String> createChapter(Chapter chapter) {
         return Optional.empty();
     }
 
-    public Object delete(String id) {
-        try {
-            return projectApi.deleteContainer(project, id).execute().body();
-        } catch (IOException e) {
-            throw new RancherException(e.getMessage(), RancherException.DELETE_ERROR);
-        }
-    }
 
-    public Object start(String id) {
-        try {
-            return containerApi.start(id).execute().body();
-        } catch (IOException e) {
-            throw new RancherException(e.getMessage(), RancherException.START_ERROR);
-        }
-    }
-
-    public Object stop(String id) {
-        try {
-            return containerApi.stop(id, new InstanceStop(false, new BigInteger("0"))).execute().body();
-        } catch (IOException e) {
-            throw new RancherException(e.getMessage(), RancherException.STOP_ERROR);
-        }
+    @Override
+    public Optional<Container> add(MyContainer myContainer) {
+        return containerService.add(myContainer);
     }
 
     @Override
-    public Optional<String> findUrl(String id) {
+    public Object delete(String id) {
+        return containerService.delete(id);
+    }
+
+    @Override
+    public Object start(String id) {
+        return containerService.start(id);
+    }
+
+    @Override
+    public Object stop(String id) {
+        return containerService.stop(id);
+    }
+
+    @Override
+    public Object logs(String id) {
+        return containerService.logs(id);
+    }
+
+    @Override
+    public Optional<String> findChapterUrl(String id) {
         Optional<String> url;
         int i = MinRequestTime;
-        do{
-            url = findUrlUtil(id);
+        do {
+            url = findChapterUrlUtil(id);
             try {
                 Thread.sleep(i);
             } catch (InterruptedException e) {
                 throw new RancherException(e.getMessage(), RancherException.CHAPTER_ERROR);
             }
-        }while ((i+=i)<MaxRequestTime&&!url.isPresent());
+        } while ((i += i) < MaxRequestTime && !url.isPresent());
         return url;
     }
 
-    private Optional<String> findUrlUtil(String id) {
-        Optional<Container> container = find(id);
+    private Optional<String> findChapterUrlUtil(String id) {
+        Optional<Container> container = findById(id);
         Map map = new HashMap();
         List ports = new ArrayList();
-        if(container.isPresent()) {
+        if (container.isPresent()) {
             Map data = container.get().getData();
-            if(data.containsKey("fields"))
-                map =(Map) data.get("fields");
+            if (data.containsKey("fields"))
+                map = (Map) data.get("fields");
         }
         if (map.containsKey("ports")) {
             ports = (List) map.get("ports");
         }
-        if(!ports.isEmpty()) {
+        if (!ports.isEmpty()) {
             Pattern p = Pattern.compile(":.?\\d+");
             Matcher m = p.matcher(ports.get(0).toString());
-            if (m.find()){
+            if (m.find()) {
                 if (map.containsKey("dockerHostIp"))
                     return Optional.of("http://" + map.get("dockerHostIp") + m.group(0));
             }
@@ -111,7 +119,8 @@ public class ChapterServiceImpl implements ChapterService<Chapter> {
         return Optional.empty();
     }
 
-    public Optional<Container> find(String id) {
+    @Override
+    public Optional<Container> findById(String id) {
         if (StringUtils.isEmpty(id)) {
             return Optional.empty();
         }
@@ -123,14 +132,50 @@ public class ChapterServiceImpl implements ChapterService<Chapter> {
     }
 
     @Override
+    public Optional<Container> findByName(String name) {
+        return containerService.findByName(name);
+    }
+
+    @Override
     public Boolean deleteChapter(Chapter chapter) {
         try {
-            Optional<String> idUnique = getIdUnique(chapter, project, projectApi);
-            if (idUnique.isPresent())
-                projectApi.deleteContainer(project, idUnique.get()).execute();
+            Optional<String> chapterContainerName = getChapterContainerName(chapter);
+            if (chapterContainerName.isPresent()) {
+                Optional<Container> byName = containerService.findByName(chapterContainerName.get());
+                if (byName.isPresent())
+                    projectApi.deleteContainer(project, byName.get().getId()).execute();
+            }
         } catch (IOException e) {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public Optional<String> getChapterContainerName(Chapter c) {
+        boolean i = StringUtils.isEmpty(c.getUsername());
+        boolean k = StringUtils.isEmpty(c.getImage());
+        boolean j = StringUtils.isEmpty(c.getChapterName());
+        if (!(i || k || j)) {
+            return Optional.of(c.getUsername() + "-" + c.getChapterName() + "-" + c.getImage().substring(c.getImage().indexOf("/") + 1));
+        } else {
+            log.warn("Class Field の problem :{}", c.toString());
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public Optional<String> getChapterId(Response<Container> execute, Chapter chapter, String project, ProjectApi api) {
+        if (Objects.requireNonNull(execute).message().startsWith("Unprocessable")) {
+            Optional<String> chapterContainerName = getChapterContainerName(chapter);
+            if (chapterContainerName.isPresent()) {
+                Optional<Container> byName = containerService.findByName(chapterContainerName.get());
+                if (byName.isPresent())
+                    return Optional.of(byName.get().getId());
+            }
+        }
+        if (Optional.ofNullable(execute.body()).isPresent())
+            return Optional.ofNullable(execute.body().getId());
+        return Optional.empty();
     }
 }

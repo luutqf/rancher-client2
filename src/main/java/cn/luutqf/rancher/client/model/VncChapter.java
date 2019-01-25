@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 import java.util.Objects;
 
+import static cn.luutqf.rancher.client.constant.Constants.VNC_TYPE;
+
 /**
  * @Author: ZhenYang
  * @date: 2019/1/16
@@ -20,7 +22,7 @@ import java.util.Objects;
 public class VncChapter extends Chapter {
 
     {
-        this.bodyType = "vnc-";
+        this.bodyType = VNC_TYPE;
         this.containerType = "docker:";
     }
 

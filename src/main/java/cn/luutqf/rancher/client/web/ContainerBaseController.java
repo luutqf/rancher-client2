@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
  * @date: 2019/1/16
  * @description:
  */
-public interface BaseController<T> {
+public interface ContainerBaseController<T> {
 
     @PostMapping
     Object create(T t);
@@ -17,17 +17,11 @@ public interface BaseController<T> {
     @DeleteMapping
     Object delete(String id);
 
-    @PostMapping("delete")
-    Object delete(T t);
-
     @GetMapping("start")
     Object start(String id);
 
     @GetMapping("stop")
     Object stop(String id);
-
-    @GetMapping("url")
-    Object getUrl( String id);
 
     @GetMapping
     Object find( String id);

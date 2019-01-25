@@ -1,5 +1,7 @@
 package cn.luutqf.rancher.client.service.impl;
 
+import cn.luutqf.rancher.client.entity.MyContainer;
+import cn.luutqf.rancher.client.utils.LogsUtil;
 import cn.luutqf.rancher.client.utils.WebSocketClientUtil;
 import cn.luutqf.rancher.client.exception.RancherException;
 import cn.luutqf.rancher.client.model.Chapter;
@@ -16,11 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import retrofit2.Response;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static cn.luutqf.rancher.client.constant.BasicParameter.*;
 
@@ -29,7 +30,7 @@ import static cn.luutqf.rancher.client.constant.BasicParameter.*;
  * @date: 2019/1/16
  * @description:
  */
-@Service
+@Service("JupyterServiceImpl")
 @Slf4j
 public class JupyterServiceImpl implements JupyterService {
 
@@ -42,6 +43,7 @@ public class JupyterServiceImpl implements JupyterService {
 
     private final ChapterService<Chapter> chapterService;
 
+
     @Autowired
     public JupyterServiceImpl(Rancher rancher, ChapterService<Chapter> chapterService, FileService fileService) {
         projectApi = rancher.type(ProjectApi.class);
@@ -49,20 +51,37 @@ public class JupyterServiceImpl implements JupyterService {
         this.fileService = fileService;
     }
 
-    public Optional<String> add(JupyterChapter jupyterChapter) {
-        Container container = new Container();
-        container.setPorts(Collections.singletonList(jupyterChapter.getTargetPort()));
-        container.setDataVolumes(Collections.singletonList("test/" + jupyterChapter.getUsername() + "/" + jupyterChapter.getChapterName() + ":/home/jovyan/work/"));
-        container.setVolumeDriver("rancher-nfs");
-        Boolean mkdir = fileService.create(NfsPrefix + jupyterChapter.getUsername() + "/" + jupyterChapter.getChapterName());
+    @Override
+    public Optional<String> createChapter(JupyterChapter jupyterChapter) {
+
+        Boolean mkdir = fileService.create(NfsPrefix + getFilePath(jupyterChapter));
         log.info("创建文件夹：{}", mkdir);
         if (Optional.ofNullable(mkdir).isPresent() && mkdir) {
-            //todo 这里应把参数中的文件路径写下,获取文件
-            Boolean copy = fileService.copy("/nfs/test/20140101/chapter/Untitled.ipynb", NfsPrefix + jupyterChapter.getUsername() + "/" + jupyterChapter.getChapterName() + "/Untitled.ipynb");
+            Boolean copy = fileService.copy(jupyterChapter.getFile(), NfsPrefix + getFilePath(jupyterChapter) + "/" + JupyterDefaultFile);
             log.info("创建文件操作：{}", copy);
         }
         fileService.chmod(NfsPrefix);
-        return getId(container, jupyterChapter, project, projectApi);
+
+        Optional<String> chapterContainerName = getChapterContainerName(jupyterChapter);
+        MyContainer build = MyContainer.builder()
+            .ports(Collections.singletonList(jupyterChapter.getTargetPort()))
+            .labels(new LinkedHashMap<String, Object>() {{
+                put(ContainerTTL, jupyterChapter.getTtl());
+            }})
+            .dataVolumes(Collections.singletonList(NfsWorkSpace + getFilePath(jupyterChapter) + ":" + JupyterWorkSpace))
+            .volumeDriver(RancherVolumeDriver)
+            .imageUuid(jupyterChapter.getContainerType() + jupyterChapter.getImage())
+            .build();
+        chapterContainerName.ifPresent(build::setName);
+        Optional<String> s = add(build).map(Container::getId);
+
+        return s;
+    }
+
+
+    @Override
+    public Optional<Container> add(MyContainer myContainer) {
+        return chapterService.add(myContainer);
     }
 
     @Override
@@ -80,6 +99,12 @@ public class JupyterServiceImpl implements JupyterService {
         return chapterService.stop(id);
     }
 
+    @Override
+    public Object logs(String id) {
+        return null;
+    }
+
+    @Override
     public Optional<String> getToken(String id) {
         try {
             ContainerLogs logs = new ContainerLogs();
@@ -92,7 +117,7 @@ public class JupyterServiceImpl implements JupyterService {
             log.info("Rancher container ID：{}", id);
             //todo 函数式编程
             for (int i = MinRequestTime; i < MaxRequestTime; i += i) {
-                Optional<Container> container1 = chapterService.find(id);
+                Optional<Container> container1 = chapterService.findById(id);
                 if (!container1.isPresent()) {
                     Thread.sleep(i);
                     continue;
@@ -118,7 +143,7 @@ public class JupyterServiceImpl implements JupyterService {
 
             if (Optional.ofNullable(body).isPresent()) {
                 WebSocketClient webSocketClient;
-                Optional<WebSocketClient> optional = WebSocketClientUtil.getWebSocketClient(body.getUrl() + "?token=" + body.getToken());
+                Optional<WebSocketClient> optional = WebSocketClientUtil.getWebSocketClient(body.getUrl() + "?token=" + body.getToken(), LogsUtil.getTokenByRegex);
                 if (optional.isPresent()) {
                     webSocketClient = optional.get();
                 } else {
@@ -131,7 +156,7 @@ public class JupyterServiceImpl implements JupyterService {
                 throw new RancherException(RancherException.JUPYTER_EMPTY);
             }
             //todo 因为缓存的生命周期与应用同步，所以可以转移
-            return Optional.ofNullable(TokenService.map.get(containerId.substring(0, 12)));
+            return Optional.ofNullable(LogsUtil.tokenMap.remove(containerId.substring(0, 12)));
         } catch (IOException e) {
             throw new RancherException(e.getMessage(), RancherException.CHAPTER_ERROR);
         } catch (InterruptedException e) {
@@ -140,13 +165,18 @@ public class JupyterServiceImpl implements JupyterService {
     }
 
     @Override
-    public Optional<String> findUrl(String id) {
-        return chapterService.findUrl(id);
+    public Optional<String> findChapterUrl(String id) {
+        return chapterService.findChapterUrl(id);
     }
 
     @Override
-    public Optional<Container> find(String id) {
-        return chapterService.find(id);
+    public Optional<Container> findById(String id) {
+        return chapterService.findById(id);
+    }
+
+    @Override
+    public Optional<Container> findByName(String name) {
+        return chapterService.findByName(name);
     }
 
     @Override
@@ -154,5 +184,16 @@ public class JupyterServiceImpl implements JupyterService {
         Boolean delete = fileService.delete(NfsPrefix + chapter.getUsername() + "/" + chapter.getChapterName());
         log.info("delete user：{}の{} file:{}", chapter.getUsername(), chapter.getChapterName(), delete);
         return chapterService.deleteChapter(chapter);
+    }
+
+    @Override
+    public Optional<String> getChapterContainerName(JupyterChapter jupyterChapter) {
+
+        return chapterService.getChapterContainerName(jupyterChapter);
+    }
+
+    @Override
+    public Optional<String> getChapterId(Response<Container> execute, JupyterChapter jupyterChapter, String project, ProjectApi api) {
+        return chapterService.getChapterId(execute, jupyterChapter, project, projectApi);
     }
 }

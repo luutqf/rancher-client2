@@ -8,7 +8,11 @@ import io.rancher.type.Container;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.Optional;
+
+import static cn.luutqf.rancher.client.constant.BasicParameter.JupyterDefaultFile;
+import static cn.luutqf.rancher.client.constant.BasicParameter.JupyterUrlPrefix;
 
 
 /**
@@ -18,7 +22,7 @@ import java.util.Optional;
  */
 @RestController
 @RequestMapping("jupyter")
-public class JupyterController implements BaseController<JupyterChapter>{
+public class JupyterController implements ChapterBaseController<JupyterChapter> {
 
     private final JupyterService jupyterService;
     private final ChapterService<Chapter> chapterService;
@@ -29,9 +33,10 @@ public class JupyterController implements BaseController<JupyterChapter>{
         this.chapterService = chapterService;
     }
 
-    public Object create( JupyterChapter jupyterChapter) {
-        Optional<String> add = jupyterService.add(jupyterChapter);
-        if (add.isPresent()){
+    @Override
+    public Object create(@Valid @RequestBody JupyterChapter jupyterChapter) {
+        Optional<String> add = jupyterService.createChapter(jupyterChapter);
+        if (add.isPresent()) {
             return getUrl(add.get());
         }
         return Optional.empty();
@@ -52,30 +57,32 @@ public class JupyterController implements BaseController<JupyterChapter>{
         return chapterService.stop(id);
     }
 
-    public Object logs(String id){
+    public Object logs(String id) {
         return Optional.empty();
     }
 
     public Object getUrl(String id) {
         Optional<String> token = jupyterService.getToken(id);
-        Optional<String> url = chapterService.findUrl(id);
-        if(!token.isPresent()||!url.isPresent()){
+        Optional<String> url = chapterService.findChapterUrl(id);
+        if (!token.isPresent() || !url.isPresent()) {
             return Optional.empty();
         }
         //todo 文件应与参数一致
-        return url.get()+"/tree/work/Untitled.ipynb"+"?"+token.get();
+        return url.get() + JupyterUrlPrefix +JupyterDefaultFile + "?" + token.get();
     }
 
     @GetMapping("token")
-    public Object getToken(String id){
+    public Object getToken(String id) {
         return jupyterService.getToken(id);
     }
 
+    @Override
     public Object find(String id) {
-        return chapterService.find(id);
+        return chapterService.findById(id);
     }
 
-    public Object delete( JupyterChapter chapter){
+    @Override
+    public Object delete(@RequestBody JupyterChapter chapter) {
         return jupyterService.deleteChapter(chapter);
     }
 }

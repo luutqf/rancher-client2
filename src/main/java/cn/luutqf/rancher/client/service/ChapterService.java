@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -21,11 +20,22 @@ import java.util.logging.Logger;
  */
 public interface ChapterService<T extends Chapter> extends ContainerService<T> {
 
-    Optional<String> findUrl(String id);
 
-    Optional<Container> find(String id);
+    Optional<String> createChapter(T t);
+
+    Optional<String> findChapterUrl(String id);
 
     Boolean deleteChapter(T chapter);
+
+    Optional<String> getChapterContainerName(T t);
+
+    Optional<String> getChapterId(Response<Container> execute, T t, String project, ProjectApi api);
+
+
+    default String getFilePath(T t){
+
+        return t.getUsername() + "/" + t.getSubjectName() + "/" + t.getChapterName();
+    }
 
     default String getContainerName(T t) {
         Logger log = Logger.getLogger(this.getClass().getName());
@@ -39,26 +49,41 @@ public interface ChapterService<T extends Chapter> extends ContainerService<T> {
             imageF.setAccessible(true);
             usernameF.setAccessible(true);
             chapterNameF.setAccessible(true);
-            return usernameF.get(t).toString() + "-" + chapterNameF.get(t).toString() + "-" + imageF.get(t).toString().substring(imageF.get(t).toString().indexOf("/") + 1);
+            Object username = usernameF.get(t);
+            Object chapterName = chapterNameF.get(t);
+            Object image = imageF.get(t);
+            if (!(Optional.ofNullable(image).isPresent() || Optional.ofNullable(username).isPresent() || Optional.ofNullable(chapterName).isPresent())) {
+                throw new RancherException("null???", RancherException.CHAPTER_ERROR);
+            }
+            if (username != null) {
+                if (image != null) {
+                    return username.toString() + "-" + chapterName.toString() + "-" + image.toString().substring(image.toString().indexOf("/") + 1);
+                }
+            }
         } catch (NoSuchFieldException | IllegalAccessException e) {
             log.warning("Class Field の problem :" + toString());
             throw new RancherException(e.getMessage(), RancherException.CHAPTER_ERROR);
         }
+        throw new RancherException("", RancherException.CHAPTER_ERROR);
     }
 
-    default Optional<String> getId(Container container, T t, String project, ProjectApi api) {
-        Response<Container> execute = createContainer(container, t, project, api);
-        if (Objects.requireNonNull(execute).message().startsWith("Unprocessable")) {
-            return getIdUnique(t, project, api);
-        }
-        if (Optional.ofNullable(execute.body()).isPresent())
-            return Optional.ofNullable(execute.body().getId());
-        return Optional.empty();
-    }
+//    default Optional<String> createContainerForId(Container container, T t, String project, ProjectApi api) {
+//        Response<Container> execute = createContainer(container, t, project, api);
+//        if (Objects.requireNonNull(execute).message().startsWith("Unprocessable")) {
+//            return getIdUnique(t, project, api);
+//        }
+//        if (Optional.ofNullable(execute.body()).isPresent())
+//            return Optional.ofNullable(execute.body().getId());
+//        return Optional.empty();
+//    }
 
     default Response<Container> createContainer(Container container, T t, String project, ProjectApi api) {
         container.setImageUuid(t.getContainerType() + t.getImage());
-        container.setName(getContainerName(t));
+        Optional<String> chapterContainerName = getChapterContainerName(t);
+        if (chapterContainerName.isPresent())
+            container.setName(chapterContainerName.get());
+        else
+            throw new RancherException(RancherException.CHAPTER_FIELD_EMPTY);
         try {
             return api.createContainer(project, container).execute();
         } catch (IOException e) {
@@ -66,23 +91,28 @@ public interface ChapterService<T extends Chapter> extends ContainerService<T> {
         }
     }
 
-    default Optional<String> getIdUnique(T t, String project, ProjectApi api) {
-        TypeCollection<Container> body;
-        try {
-            body = api.listContainers(project).execute().body();
-        } catch (IOException e) {
-            throw new RancherException(e.getMessage(), RancherException.LIST_CONTAINER_ERROR);
-        }
-        if (!Optional.ofNullable(body).isPresent()) {
-            return Optional.empty();
-        }
-        for (Container c : body.getData()) {
-            boolean name = c.getName().equals(getContainerName(t));
-            if (name) {
-                return Optional.ofNullable(c.getId());
-            }
-        }
-        return Optional.empty();
-    }
+//    default Optional<String> getIdUnique(T t, String project, ProjectApi api) {
+//        TypeCollection<Container> body;
+//        try {
+//            body = api.listContainers(project).execute().body();
+//        } catch (IOException e) {
+//            throw new RancherException(e.getMessage(), RancherException.LIST_CONTAINER_ERROR);
+//        }
+//        if (!Optional.ofNullable(body).isPresent()) {
+//            return Optional.empty();
+//        }
+//        for (Container c : body.getData()) {
+//            Optional<String> chapterContainerName = getChapterContainerName(t);
+//            if(!chapterContainerName.isPresent()){
+//                throw new RancherException(RancherException.CHAPTER_FIELD_EMPTY);
+//            }
+//            boolean name = c.getName().equals(chapterContainerName.get());
+//            if (name) {
+//                return Optional.ofNullable(c.getId());
+//            }
+//        }
+//        return Optional.empty();
+//    }
+
 
 }

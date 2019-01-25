@@ -10,7 +10,7 @@ import static cn.luutqf.rancher.client.constant.BasicParameter.FileServer;
 /**
  * @Author: ZhenYang
  * @date: 2019/1/24
- * @description:
+ * @description: 在没有微服务架构的情况下，需要指定服务
  */
 @Service
 public class FileServiceImpl implements FileService {

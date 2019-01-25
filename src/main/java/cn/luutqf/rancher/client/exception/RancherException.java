@@ -18,9 +18,12 @@ public class RancherException extends RuntimeException{
     public static final Integer THREAD_ERROR = 588;
     public static final Integer DELETE_ERROR = 587;
     public static final Integer JUPYTER_EMPTY = 582;
+    public static final Integer CHAPTER_FIELD_EMPTY = 590;
     public static final Integer WEB_SOCKET_ERROR = 589;
     public static final Integer CREATE_CHAPTER_ERROR = 583;
+    public static final Integer CREATE_CONTAINER_ERROR = 591;
     public static final Integer LIST_CONTAINER_ERROR = 584;
+    public static final Integer TIME_ERROR = 592;
 
     private Integer code;
 

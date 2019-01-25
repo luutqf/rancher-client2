@@ -17,7 +17,7 @@ import java.util.Optional;
  */
 @RestController
 @RequestMapping("vnc")
-public class VncController implements BaseController<VncChapter>{
+public class VncController implements ChapterBaseController<VncChapter> {
 
     private final VncService vncService;
     private final ChapterService<Chapter> chapterService;
@@ -28,10 +28,12 @@ public class VncController implements BaseController<VncChapter>{
         this.chapterService = chapterService;
     }
 
-    public Object create( VncChapter vncChapter) {
-        Optional<String> add = vncService.add(vncChapter);
-        if(add.isPresent()){
-            return chapterService.findUrl(add.get());
+    @Override
+    public Object create(@RequestBody VncChapter vncChapter) {
+        Optional<String> add = vncService.createChapter(vncChapter);
+        if (add.isPresent()) {
+            Optional<String> url = chapterService.findChapterUrl(add.get());
+            if (url.isPresent()) return url.get();
         }
         return Optional.empty();
     }
@@ -42,7 +44,7 @@ public class VncController implements BaseController<VncChapter>{
     }
 
     @Override
-    public Object delete(VncChapter chapter) {
+    public Object delete(@RequestBody VncChapter chapter) {
         return chapterService.deleteChapter(chapter);
     }
 
@@ -58,12 +60,12 @@ public class VncController implements BaseController<VncChapter>{
 
     @Override
     public Object getUrl(String id) {
-        return chapterService.findUrl(id);
+        return chapterService.findChapterUrl(id);
     }
 
     @Override
     public Object find(String id) {
-        return chapterService.find(id);
+        return chapterService.findById(id);
     }
 
     @Override
