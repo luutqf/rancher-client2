@@ -31,9 +31,19 @@ public class ChapterController implements ChapterBaseController<Chapter> {
         return chapterService.start(id);
     }
 
+    @Override
+    public Object startByName(String name) {
+        return chapterService.startByName(name);
+    }
+
     @ApiOperation(value = "stop chapter")
     public Object stop(String id) {
         return chapterService.stop(id);
+    }
+
+    @Override
+    public Object stopByName(String name) {
+        return chapterService.stopByName(name);
     }
 
     @ApiOperation(value = "get url for chapter")
@@ -63,5 +73,15 @@ public class ChapterController implements ChapterBaseController<Chapter> {
     @Override
     public Object delete(Chapter chapter){
         return chapterService.deleteChapter(chapter);
+    }
+
+    @Override
+    public Object stop(Chapter chapter) {
+        return null;
+    }
+
+    @Override
+    public Object start(Chapter chapter) {
+        return null;
     }
 }

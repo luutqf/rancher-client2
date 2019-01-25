@@ -1,6 +1,8 @@
 package cn.luutqf.rancher.client.web;
 
 import cn.luutqf.rancher.client.entity.MyContainer;
+import cn.luutqf.rancher.client.service.ContainerService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -14,32 +16,50 @@ import org.springframework.web.bind.annotation.RestController;
 public class ContainerController implements ContainerBaseController<MyContainer> {
 
 
+    private final ContainerService<MyContainer> containerService;
+
+    @Autowired
+    public ContainerController(ContainerService<MyContainer> containerService) {
+        this.containerService = containerService;
+    }
+
     @Override
     public Object create(MyContainer container) {
-        return "";
+        return containerService.add(container);
     }
+
     @Override
     public Object delete(String id) {
-        return "";
+        return containerService.delete(id);
     }
 
     @Override
     public Object start(String id) {
-        return "";
+        return containerService.start(id);
+    }
+
+    @Override
+    public Object startByName(String name) {
+        return null;
     }
 
     @Override
     public Object stop(String id) {
-        return "";
+        return containerService.stop(id);
+    }
+
+    @Override
+    public Object stopByName(String name) {
+        return null;
     }
 
     @Override
     public Object find(String id) {
-        return "";
+        return containerService.findById(id);
     }
 
     @Override
     public Object logs(String id) {
-        return "";
+        return containerService.logs(id);
     }
 }

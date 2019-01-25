@@ -54,13 +54,6 @@ public class JupyterServiceImpl implements JupyterService {
     @Override
     public Optional<String> createChapter(JupyterChapter jupyterChapter) {
 
-        Boolean mkdir = fileService.create(NfsPrefix + getFilePath(jupyterChapter));
-        log.info("创建文件夹：{}", mkdir);
-        if (Optional.ofNullable(mkdir).isPresent() && mkdir) {
-            Boolean copy = fileService.copy(jupyterChapter.getFile(), NfsPrefix + getFilePath(jupyterChapter) + "/" + JupyterDefaultFile);
-            log.info("创建文件操作：{}", copy);
-        }
-        fileService.chmod(NfsPrefix);
 
         Optional<String> chapterContainerName = getChapterContainerName(jupyterChapter);
         MyContainer build = MyContainer.builder()
@@ -74,6 +67,20 @@ public class JupyterServiceImpl implements JupyterService {
             .build();
         chapterContainerName.ifPresent(build::setName);
         Optional<String> s = add(build).map(Container::getId);
+
+        Boolean mkdir = fileService.create(NfsPrefix + getFilePath(jupyterChapter));
+        log.info("创建文件夹：{}", mkdir);
+        if (Optional.ofNullable(mkdir).isPresent() && mkdir) {
+            Boolean copy;
+            if (!StringUtils.isEmpty(jupyterChapter.getFile())) {
+                copy = fileService.copy(jupyterChapter.getFile(), NfsPrefix + getFilePath(jupyterChapter) + "/" + JupyterDefaultFile);
+
+            } else {
+                copy = fileService.copy("/nfs/test/mine/01/01/default.ipynb", NfsPrefix + getFilePath(jupyterChapter) + "/" + JupyterDefaultFile);
+            }
+            log.info("创建文件操作：{}", copy);
+        }
+        fileService.chmod(NfsPrefix);
 
         return s;
     }
@@ -92,6 +99,16 @@ public class JupyterServiceImpl implements JupyterService {
     @Override
     public Object start(String id) {
         return chapterService.start(id);
+    }
+
+    @Override
+    public Object startByName(String name) {
+        return chapterService.startByName(name);
+    }
+
+    @Override
+    public Object stopByName(String name) {
+        return chapterService.stopByName(name);
     }
 
     @Override
@@ -181,7 +198,7 @@ public class JupyterServiceImpl implements JupyterService {
 
     @Override
     public Boolean deleteChapter(JupyterChapter chapter) {
-        Boolean delete = fileService.delete(NfsPrefix + chapter.getUsername() + "/" + chapter.getChapterName());
+        Boolean delete = fileService.delete(NfsPrefix + getFilePath(chapter));
         log.info("delete user：{}の{} file:{}", chapter.getUsername(), chapter.getChapterName(), delete);
         return chapterService.deleteChapter(chapter);
     }

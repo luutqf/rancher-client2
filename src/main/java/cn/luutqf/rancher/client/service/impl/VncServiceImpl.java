@@ -79,13 +79,23 @@ public class VncServiceImpl implements VncService {
     }
 
     @Override
+    public Object startByName(String name) {
+        return chapterService.startByName(name);
+    }
+
+    @Override
+    public Object stopByName(String name) {
+        return chapterService.stopByName(name);
+    }
+
+    @Override
     public Object stop(String id) {
         return chapterService.stop(id);
     }
 
     @Override
     public Object logs(String id) {
-        return null;
+        return "";
     }
 
     @Override

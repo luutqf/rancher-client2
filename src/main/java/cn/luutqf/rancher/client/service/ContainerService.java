@@ -19,6 +19,9 @@ public interface ContainerService<T> {
 
     Object start(String id);
 
+    Object startByName(String name);
+    Object stopByName(String name);
+
     Object stop(String id);
 
     Object logs(String id);

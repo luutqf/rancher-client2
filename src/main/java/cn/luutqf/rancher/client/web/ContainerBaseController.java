@@ -20,8 +20,14 @@ public interface ContainerBaseController<T> {
     @GetMapping("start")
     Object start(String id);
 
+    @GetMapping("startByName")
+    Object startByName(String name);
+
     @GetMapping("stop")
     Object stop(String id);
+
+    @GetMapping("stopByName")
+    Object stopByName(String name);
 
     @GetMapping
     Object find( String id);

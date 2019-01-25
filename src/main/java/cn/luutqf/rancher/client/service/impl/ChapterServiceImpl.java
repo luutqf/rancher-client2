@@ -72,6 +72,16 @@ public class ChapterServiceImpl implements ChapterService<Chapter> {
     }
 
     @Override
+    public Object startByName(String name) {
+        return containerService.startByName(name);
+    }
+
+    @Override
+    public Object stopByName(String name) {
+        return containerService.stopByName(name);
+    }
+
+    @Override
     public Object stop(String id) {
         return containerService.stop(id);
     }
@@ -156,8 +166,9 @@ public class ChapterServiceImpl implements ChapterService<Chapter> {
         boolean i = StringUtils.isEmpty(c.getUsername());
         boolean k = StringUtils.isEmpty(c.getImage());
         boolean j = StringUtils.isEmpty(c.getChapterName());
-        if (!(i || k || j)) {
-            return Optional.of(c.getUsername() + "-" + c.getChapterName() + "-" + c.getImage().substring(c.getImage().indexOf("/") + 1));
+        boolean y = StringUtils.isEmpty(c.getSubjectName());
+        if (!(i || k || j || y)) {
+            return Optional.of(c.getUsername() + "-" + c.getSubjectName() +"-" + c.getChapterName() + "-" + c.getImage().substring(c.getImage().indexOf("/") + 1));
         } else {
             log.warn("Class Field の problem :{}", c.toString());
             return Optional.empty();

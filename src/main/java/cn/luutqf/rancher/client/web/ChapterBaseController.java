@@ -15,4 +15,10 @@ public interface ChapterBaseController<T> extends ContainerBaseController<T>{
 
     @PostMapping("delete")
     Object delete(T t);
+
+    @PostMapping("stop")
+    Object stop(T t);
+
+    @PostMapping("start")
+    Object start(T t);
 }

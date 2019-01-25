@@ -49,13 +49,33 @@ public class VncController implements ChapterBaseController<VncChapter> {
     }
 
     @Override
+    public Object stop(VncChapter vncChapter) {
+        return null;
+    }
+
+    @Override
+    public Object start(VncChapter vncChapter) {
+        return null;
+    }
+
+    @Override
     public Object start(String id) {
         return chapterService.start(id);
     }
 
     @Override
+    public Object startByName(String name) {
+        return chapterService.startByName(name);
+    }
+
+    @Override
     public Object stop(String id) {
         return chapterService.stop(id);
+    }
+
+    @Override
+    public Object stopByName(String name) {
+        return chapterService.stopByName(name);
     }
 
     @Override

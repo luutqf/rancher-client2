@@ -55,11 +55,13 @@ public class ContainerServiceImpl implements ContainerService<MyContainer> {
                 if (Optional.ofNullable(byName).isPresent()) {
                     return byName;
                 }
+            } else {
+                return Optional.of(body);
             }
-            return Optional.empty();
         } catch (IOException e) {
             throw new RancherException(RancherException.CREATE_CONTAINER_ERROR);
         }
+        return Optional.empty();
     }
 
     @Override
@@ -81,8 +83,32 @@ public class ContainerServiceImpl implements ContainerService<MyContainer> {
     }
 
     @Override
+    public Object startByName(String name) {
+        Optional<Container> byName = findByName(name);
+        if (byName.isPresent()) {
+            start(byName.get().getId());
+            return byName.get();
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public Object stopByName(String name) {
+        Optional<Container> byName = findByName(name);
+        if (byName.isPresent()) {
+            stop(byName.get().getId());
+            return byName.get();
+        }
+        return Optional.empty();
+    }
+
+    @Override
     public Object stop(String id) {
-        return projectApi.stopContainer(project, id, new InstanceStop(false, new BigInteger("0")));
+        try {
+            return projectApi.stopContainer(project, id, new InstanceStop(false, new BigInteger("0"))).execute().isSuccessful();
+        } catch (IOException e) {
+            throw new RancherException(e.getMessage(), RancherException.STOP_ERROR);
+        }
     }
 
     @Override
@@ -94,7 +120,7 @@ public class ContainerServiceImpl implements ContainerService<MyContainer> {
     @Override
     public Optional<Container> findById(String id) {
         try {
-            return Optional.ofNullable(projectApi.findContainerById(project,id).execute().body());
+            return Optional.ofNullable(projectApi.findContainerById(project, id).execute().body());
         } catch (IOException e) {
             throw new RancherException(RancherException.LIST_CONTAINER_ERROR);
         }

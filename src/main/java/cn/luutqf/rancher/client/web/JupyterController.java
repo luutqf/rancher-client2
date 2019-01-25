@@ -53,8 +53,18 @@ public class JupyterController implements ChapterBaseController<JupyterChapter> 
     }
 
     @Override
+    public Object startByName(String name) {
+        return jupyterService.startByName(name);
+    }
+
+    @Override
     public Object stop(String id) {
         return chapterService.stop(id);
+    }
+
+    @Override
+    public Object stopByName(String name) {
+        return jupyterService.stopByName(name);
     }
 
     public Object logs(String id) {
@@ -84,5 +94,15 @@ public class JupyterController implements ChapterBaseController<JupyterChapter> 
     @Override
     public Object delete(@RequestBody JupyterChapter chapter) {
         return jupyterService.deleteChapter(chapter);
+    }
+
+    @Override
+    public Object stop(JupyterChapter jupyterChapter) {
+        return null;
+    }
+
+    @Override
+    public Object start(JupyterChapter jupyterChapter) {
+        return null;
     }
 }
