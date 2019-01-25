@@ -10,15 +10,35 @@ import org.springframework.web.bind.annotation.PostMapping;
  */
 public interface ChapterBaseController<T> extends ContainerBaseController<T>{
 
+    /**
+     *
+     * @param id
+     * @return
+     */
     @GetMapping("url")
     Object getUrl( String id);
 
+    /**
+     *
+     * @param t
+     * @return
+     */
     @PostMapping("delete")
     Object delete(T t);
 
+    /**
+     *
+     * @param t
+     * @return
+     */
     @PostMapping("stop")
     Object stop(T t);
 
+    /**
+     *
+     * @param t
+     * @return
+     */
     @PostMapping("start")
     Object start(T t);
 }

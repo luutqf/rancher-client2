@@ -1,6 +1,5 @@
 package cn.luutqf.rancher.client.web;
 
-import cn.luutqf.rancher.client.exception.RancherException;
 import cn.luutqf.rancher.client.model.Chapter;
 import cn.luutqf.rancher.client.service.ChapterService;
 import io.swagger.annotations.Api;

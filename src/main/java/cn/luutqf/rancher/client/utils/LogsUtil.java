@@ -1,7 +1,5 @@
 package cn.luutqf.rancher.client.utils;
 
-import cn.luutqf.rancher.client.service.LogsService;
-
 import java.util.LinkedHashMap;
 import java.util.function.Function;
 import java.util.regex.Matcher;

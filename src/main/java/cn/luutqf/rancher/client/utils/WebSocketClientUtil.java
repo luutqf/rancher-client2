@@ -1,6 +1,5 @@
 package cn.luutqf.rancher.client.utils;
 
-import cn.luutqf.rancher.client.service.LogsService;
 import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_6455;
@@ -11,10 +10,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static cn.luutqf.rancher.client.constant.Constants.*;
 
 /**
  * @Author ZhenYang

@@ -4,7 +4,6 @@ import cn.luutqf.rancher.client.entity.MyContainer;
 import cn.luutqf.rancher.client.model.Chapter;
 import cn.luutqf.rancher.client.model.VncChapter;
 import cn.luutqf.rancher.client.service.ChapterService;
-import cn.luutqf.rancher.client.service.ContainerService;
 import cn.luutqf.rancher.client.service.VncService;
 import io.rancher.Rancher;
 import io.rancher.service.ProjectApi;
@@ -17,7 +16,6 @@ import retrofit2.Response;
 import java.util.*;
 
 import static cn.luutqf.rancher.client.constant.BasicParameter.*;
-import static cn.luutqf.rancher.client.constant.BasicParameter.RancherVolumeDriver;
 import static cn.luutqf.rancher.client.constant.Constants.VNC_PASSWD;
 
 /**

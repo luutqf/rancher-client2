@@ -5,7 +5,6 @@ import cn.luutqf.rancher.client.exception.RancherException;
 import cn.luutqf.rancher.client.service.ContainerService;
 import io.rancher.Rancher;
 import io.rancher.base.TypeCollection;
-import io.rancher.service.ContainerApi;
 import io.rancher.service.ProjectApi;
 import io.rancher.type.Container;
 import io.rancher.type.InstanceStop;
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.Objects;
 import java.util.Optional;
 
 /**

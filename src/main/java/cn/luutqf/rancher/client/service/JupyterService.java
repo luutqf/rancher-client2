@@ -10,5 +10,10 @@ import java.util.Optional;
  * @description:
  */
 public interface JupyterService extends ChapterService<JupyterChapter>{
+    /**
+     *
+     * @param id
+     * @return
+     */
     Optional<String> getToken(String id);
 }

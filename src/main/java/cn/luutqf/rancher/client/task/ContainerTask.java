@@ -48,8 +48,8 @@ public class ContainerTask {
         this.chapterService = chapterService;
     }
 
-    @Scheduled(cron = " 0/50 * * * * *")
-    public void test() throws ParseException {
+    @Scheduled(cron = " 0 0/1 * * * *")
+    public void test(){
         TypeCollection<Container> body;
         try {
             body = projectApi.listContainers(project).execute().body();
@@ -64,11 +64,12 @@ public class ContainerTask {
                 try {
                     parse = sdf.parse(c.getCreated());
                     long time = (new Date().getTime() - parse.getTime()) / (1000 * 60) - 8 * 60;
-                    if (time >= Integer.valueOf(c.getLabels().get(ContainerTTL).toString())) {
+                    long residue = Integer.valueOf(c.getLabels().get(ContainerTTL).toString()) - time;
+                    if (residue <= 0) {
                         chapterService.delete(c.getId());
-                        log.info("容器{}::{}自动删除", c.getId(),c.getName());
-                    } else {
-                        log.info("容器{}::{}还剩{}分钟停止", c.getId(),c.getName(), Integer.valueOf(c.getLabels().get(ContainerTTL).toString()) - time);
+                        log.info("容器{}::{}到期自动删除", c.getId(), c.getName());
+                    } else if (residue <= 10) {
+                        log.info("容器{}::{}还剩{}分钟停止", c.getId(), c.getName(), Integer.valueOf(c.getLabels().get(ContainerTTL).toString()) - time);
                     }
                 } catch (ParseException e) {
                     throw new RancherException(e.getMessage(), RancherException.TIME_ERROR);

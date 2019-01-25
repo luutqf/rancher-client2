@@ -4,7 +4,6 @@ import cn.luutqf.rancher.client.model.Chapter;
 import cn.luutqf.rancher.client.model.JupyterChapter;
 import cn.luutqf.rancher.client.service.ChapterService;
 import cn.luutqf.rancher.client.service.JupyterService;
-import io.rancher.type.Container;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
