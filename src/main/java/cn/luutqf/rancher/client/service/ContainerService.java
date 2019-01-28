@@ -4,6 +4,7 @@ package cn.luutqf.rancher.client.service;
 import cn.luutqf.rancher.client.entity.MyContainer;
 import io.rancher.type.Container;
 
+import java.io.IOException;
 import java.util.Optional;
 
 /**
@@ -60,7 +61,7 @@ public interface ContainerService<T> {
      * @param id
      * @return
      */
-    Object logs(String id);
+    String logs(String id) ;
 
     /**
      *

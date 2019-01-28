@@ -84,8 +84,8 @@ public class ChapterServiceImpl implements ChapterService<Chapter> {
     }
 
     @Override
-    public Object logs(String id) {
-        return containerService.logs(id);
+    public String logs(String id) {
+            return containerService.logs(id);
     }
 
     @Override

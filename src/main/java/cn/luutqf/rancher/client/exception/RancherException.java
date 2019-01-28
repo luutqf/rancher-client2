@@ -14,6 +14,7 @@ public class RancherException extends RuntimeException{
     public static final Integer BEAN_ERROR = 580;
     public static final Integer CHAPTER_ERROR = 581;
     public static final Integer STOP_ERROR = 585;
+    public static final Integer LOG_ERROR = 592;
     public static final Integer START_ERROR = 586;
     public static final Integer THREAD_ERROR = 588;
     public static final Integer DELETE_ERROR = 587;

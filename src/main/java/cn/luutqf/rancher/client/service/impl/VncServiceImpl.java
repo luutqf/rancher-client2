@@ -53,11 +53,8 @@ public class VncServiceImpl implements VncService {
             .imageUuid(vncChapter.getContainerType() + vncChapter.getImage())
             .build();
         chapterContainerName.ifPresent(build::setName);
-        Optional<String> s = add(build).map(Container::getId);
-//        if(s.isPresent()){
-//
-//        }
-        return s;
+
+        return add(build).map(Container::getId);
     }
 
 
@@ -92,8 +89,8 @@ public class VncServiceImpl implements VncService {
     }
 
     @Override
-    public Object logs(String id) {
-        return "";
+    public String logs(String id) {
+        return chapterService.logs(id);
     }
 
     @Override

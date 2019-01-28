@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import retrofit2.Response;
 
+import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.*;
 
@@ -56,14 +57,11 @@ public class JupyterServiceImpl implements JupyterService {
 
 
         Optional<String> chapterContainerName = getChapterContainerName(jupyterChapter);
-        MyContainer build = MyContainer.builder()
-            .ports(Collections.singletonList(jupyterChapter.getTargetPort()))
+        MyContainer build = MyContainer.builder().ports(Collections.singletonList(jupyterChapter.getTargetPort()))
             .labels(new LinkedHashMap<String, Object>() {{
                 put(ContainerTTL, jupyterChapter.getTtl());
-            }})
-            .dataVolumes(Collections.singletonList(NfsWorkSpace + getFilePath(jupyterChapter) + ":" + JupyterWorkSpace))
-            .volumeDriver(RancherVolumeDriver)
-            .imageUuid(jupyterChapter.getContainerType() + jupyterChapter.getImage())
+            }}).dataVolumes(Collections.singletonList(NfsWorkSpace + getFilePath(jupyterChapter) + ":" + JupyterWorkSpace))
+            .volumeDriver(RancherVolumeDriver).imageUuid(jupyterChapter.getContainerType() + jupyterChapter.getImage())
             .build();
         chapterContainerName.ifPresent(build::setName);
         Optional<String> s = add(build).map(Container::getId);
@@ -72,16 +70,17 @@ public class JupyterServiceImpl implements JupyterService {
         log.info("创建文件夹：{}", mkdir);
         if (Optional.ofNullable(mkdir).isPresent() && mkdir) {
             Boolean copy;
+            System.out.println(jupyterChapter.getFile());
             if (!StringUtils.isEmpty(jupyterChapter.getFile())) {
                 copy = fileService.copy(jupyterChapter.getFile(), NfsPrefix + getFilePath(jupyterChapter) + "/" + JupyterDefaultFile);
 
             } else {
-                copy = fileService.copy("/nfs/test/mine/01/01/default.ipynb", NfsPrefix + getFilePath(jupyterChapter) + "/" + JupyterDefaultFile);
+                int i = Integer.valueOf(jupyterChapter.getChapterName()) % 8;
+                copy = fileService.copy("/nfs/test/mine/" + "01" + "/" + (i < 10 ? "0" + i : i + "") + "/default.ipynb", NfsPrefix + getFilePath(jupyterChapter) + "/" + JupyterDefaultFile);
             }
             log.info("创建文件操作：{}", copy);
         }
         fileService.chmod(NfsPrefix);
-
         return s;
     }
 
@@ -117,69 +116,10 @@ public class JupyterServiceImpl implements JupyterService {
     }
 
     @Override
-    public Object logs(String id) {
-        return null;
+    public String logs(String id) {
+        return chapterService.logs(id);
     }
 
-    @Override
-    public Optional<String> getToken(String id) {
-        try {
-            ContainerLogs logs = new ContainerLogs();
-            HostAccess body;
-            int count = MinRequestTime;
-            Map dockerContainer;
-            String containerId = "";
-            Container container;
-
-            log.info("Rancher container ID：{}", id);
-            //todo 函数式编程
-            for (int i = MinRequestTime; i < MaxRequestTime; i += i) {
-                Optional<Container> container1 = chapterService.findById(id);
-                if (!container1.isPresent()) {
-                    Thread.sleep(i);
-                    continue;
-                }
-                container = container1.get();
-                Map<String, Object> data = container.getData();
-                dockerContainer = (Map) data.get("dockerContainer");
-                if (Optional.ofNullable(dockerContainer).isPresent()) {
-                    containerId = dockerContainer.get("Id").toString();
-                    log.info("docker container ID：{}", containerId);
-                    break;
-                }
-                Thread.sleep(i);
-            }
-
-            if (StringUtils.isEmpty(containerId))
-                throw new RancherException(RancherException.JUPYTER_EMPTY);
-
-            do {
-                body = projectApi.logsContainer(project, id, logs).execute().body();
-                Thread.sleep(count += count);
-            } while (!Optional.ofNullable(body).isPresent() && count < MaxRequestTime);
-
-            if (Optional.ofNullable(body).isPresent()) {
-                WebSocketClient webSocketClient;
-                Optional<WebSocketClient> optional = WebSocketClientUtil.getWebSocketClient(body.getUrl() + "?token=" + body.getToken(), LogsUtil.getTokenByRegex);
-                if (optional.isPresent()) {
-                    webSocketClient = optional.get();
-                } else {
-                    throw new RancherException(RancherException.WEB_SOCKET_ERROR);
-                }
-                while (!webSocketClient.isClosed() && count < MaxRequestTime) {
-                    Thread.sleep(count += count);
-                }
-            } else {
-                throw new RancherException(RancherException.JUPYTER_EMPTY);
-            }
-            //todo 因为缓存的生命周期与应用同步，所以可以转移
-            return Optional.ofNullable(LogsUtil.tokenMap.remove(containerId.substring(0, 12)));
-        } catch (IOException e) {
-            throw new RancherException(e.getMessage(), RancherException.CHAPTER_ERROR);
-        } catch (InterruptedException e) {
-            throw new RancherException(e.getMessage(), RancherException.THREAD_ERROR);
-        }
-    }
 
     @Override
     public Optional<String> findChapterUrl(String id) {
@@ -205,7 +145,6 @@ public class JupyterServiceImpl implements JupyterService {
 
     @Override
     public Optional<String> getChapterContainerName(JupyterChapter jupyterChapter) {
-
         return chapterService.getChapterContainerName(jupyterChapter);
     }
 
@@ -213,4 +152,80 @@ public class JupyterServiceImpl implements JupyterService {
     public Optional<String> getChapterId(Response<Container> execute, JupyterChapter jupyterChapter, String project, ProjectApi api) {
         return chapterService.getChapterId(execute, jupyterChapter, project, projectApi);
     }
+
+    @Override
+    public Optional<String> getToken(String id) {
+        Optional<Container> container = chapterService.findById(id);
+        if (container.isPresent()) {
+            String logs = chapterService.logs(id);
+            return Optional.of(LogsUtil.getTokenByRegex3.apply(logs));
+        }
+        return Optional.empty();
+    }
 }
+
+//    @Override
+//    public Optional<String> getToken(String id) {
+//        try {
+//            ContainerLogs logs = new ContainerLogs();
+//            HostAccess body;
+//            int count = MinRequestTime;
+//            Map dockerContainer;
+//            String containerId = "";
+//            Container container;
+//
+//            log.info("Rancher container ID：{}", id);
+//            //todo 函数式编程
+//            for (int i = MinRequestTime; i < MaxRequestTime; i += i) {
+//                Optional<Container> container1 = chapterService.findById(id);
+//                if (!container1.isPresent()) {
+//                    Thread.sleep(i);
+//                    continue;
+//                }
+//                container = container1.get();
+//                Map<String, Object> data = container.getData();
+//                dockerContainer = (Map) data.get("dockerContainer");
+//                if (Optional.ofNullable(dockerContainer).isPresent()) {
+//                    containerId = dockerContainer.get("Id").toString();
+//                    log.info("docker container ID：{}", containerId);
+//                    break;
+//                }
+//                Thread.sleep(i);
+//            }
+//
+//            if (StringUtils.isEmpty(containerId))
+//                throw new RancherException(RancherException.JUPYTER_EMPTY);
+//            do {
+//                body = projectApi.logsContainer(project, id, logs).execute().body();
+//                Thread.sleep(count += count);
+//            } while (!Optional.ofNullable(body).isPresent() && count < MaxRequestTime);
+//            LogsUtil.logMap2.put(containerId,new StringBuffer());
+//            if (Optional.ofNullable(body).isPresent()) {
+//                WebSocketClient webSocketClient;
+//                Optional<WebSocketClient> optional = WebSocketClientUtil.getWebSocketClient(body.getUrl() + "?token=" + body.getToken(), containerId);
+//                if (optional.isPresent()) {
+//                    webSocketClient = optional.get();
+//                } else {
+//                    throw new RancherException(RancherException.WEB_SOCKET_ERROR);
+//                }
+//                while (!webSocketClient.isClosed() && count < 500) {
+//                    Thread.sleep(count += count);
+//                }
+//                webSocketClient.close();
+//                Boolean apply = LogsUtil.getTokenByRegex2.apply(containerId);
+//                if(apply){
+//                    System.out.println("找到了token："+LogsUtil.tokenMap.get(containerId));
+//                }else {
+//                    throw new RancherException(RancherException.JUPYTER_EMPTY);
+//                }
+//            } else {
+//                throw new RancherException(RancherException.JUPYTER_EMPTY);
+//            }
+//            //todo 因为缓存的生命周期与应用同步，所以可以转移
+//            return Optional.ofNullable(LogsUtil.tokenMap.remove(containerId));
+//        } catch (IOException e) {
+//            throw new RancherException(e.getMessage(), RancherException.CHAPTER_ERROR);
+//        } catch (InterruptedException e) {
+//            throw new RancherException(e.getMessage(), RancherException.THREAD_ERROR);
+//        }
+//    }

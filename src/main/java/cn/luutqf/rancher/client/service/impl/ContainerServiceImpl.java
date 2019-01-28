@@ -3,11 +3,16 @@ package cn.luutqf.rancher.client.service.impl;
 import cn.luutqf.rancher.client.entity.MyContainer;
 import cn.luutqf.rancher.client.exception.RancherException;
 import cn.luutqf.rancher.client.service.ContainerService;
+import cn.luutqf.rancher.client.utils.LogsUtil;
+import cn.luutqf.rancher.client.utils.WebSocketClientUtil;
 import io.rancher.Rancher;
 import io.rancher.base.TypeCollection;
 import io.rancher.service.ProjectApi;
 import io.rancher.type.Container;
+import io.rancher.type.ContainerLogs;
+import io.rancher.type.HostAccess;
 import io.rancher.type.InstanceStop;
+import org.java_websocket.client.WebSocketClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -15,6 +20,9 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Optional;
+
+import static cn.luutqf.rancher.client.constant.BasicParameter.MaxRequestTime;
+import static cn.luutqf.rancher.client.constant.BasicParameter.MinRequestTime;
 
 /**
  * @Author: ZhenYang
@@ -33,7 +41,6 @@ public class ContainerServiceImpl implements ContainerService<MyContainer> {
     @Autowired
     public ContainerServiceImpl(Rancher rancher) {
         projectApi = rancher.type(ProjectApi.class);
-
     }
 
     @Override
@@ -110,9 +117,38 @@ public class ContainerServiceImpl implements ContainerService<MyContainer> {
     }
 
     @Override
-    public Object logs(String id) {
+    public String logs(String id) {
+        int count = MinRequestTime;
         //TODO 获取日志
-        return Optional.empty();
+        Optional<Container> byId = findById(id);
+        if (byId.isPresent()) {
+            Container container = byId.get();
+            ContainerLogs logs = new ContainerLogs();
+            HostAccess body;
+            try {
+                body = projectApi.logsContainer(project, id, logs).execute().body();
+            } catch (IOException e) {
+                throw new RancherException(e.getMessage(), RancherException.LOG_ERROR);
+            }
+            LogsUtil.logMap2.put(container.getId(), new StringBuffer());
+            if (Optional.ofNullable(body).isPresent()) {
+                Optional<WebSocketClient> webSocketClient = WebSocketClientUtil.getWebSocketClient(body.getUrl() + "?token=" + body.getToken(), container.getId());
+                if (webSocketClient.isPresent()) {
+                    while (!webSocketClient.get().isClosed() && count < MaxRequestTime / 8) {
+                        try {
+                            Thread.sleep(count += count);
+                        } catch (InterruptedException e) {
+                            throw new RancherException(e.getMessage(), RancherException.LOG_ERROR);
+                        }
+                    }
+                    webSocketClient.get().close();
+                }
+            }
+            if (LogsUtil.logMap2.containsKey(container.getId())) {
+                return LogsUtil.logMap2.get(container.getId()).toString();
+            }
+        }
+        return "";
     }
 
     @Override
@@ -136,8 +172,10 @@ public class ContainerServiceImpl implements ContainerService<MyContainer> {
             return Optional.empty();
         }
         for (Container c : body.getData()) {
-            if (c.getName().equals(name)) {
-                return Optional.ofNullable(c);
+            if (Optional.ofNullable(c.getName()).isPresent()) {
+                if (c.getName().equals(name)) {
+                    return Optional.of(c);
+                }
             }
         }
         return Optional.empty();

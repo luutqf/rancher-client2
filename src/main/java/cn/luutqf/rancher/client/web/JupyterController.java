@@ -67,12 +67,13 @@ public class JupyterController implements ChapterBaseController<JupyterChapter> 
     }
 
     public Object logs(String id) {
-        return Optional.empty();
+        return chapterService.logs(id);
     }
 
     public Object getUrl(String id) {
-        Optional<String> token = jupyterService.getToken(id);
+
         Optional<String> url = chapterService.findChapterUrl(id);
+        Optional<String> token = jupyterService.getToken(id);
         if (!token.isPresent() || !url.isPresent()) {
             return Optional.empty();
         }

@@ -16,6 +16,7 @@ public class BasicParameter {
     public static final String NfsWorkSpace = "test/";
     public static final String JupyterUrlPrefix = "/tree/work/";
     public static final String JupyterDefaultFile = "default.ipynb";
+    public static final String JupyterDefaultConstructorFile = "/nfs/test/mine/01/01/default.ipynb";
     public static final String RancherVolumeDriver = "rancher-nfs";
     public static final String JupyterWorkSpace = "/home/jovyan/work/";
     public static final String ContainerTTL = "ttl";

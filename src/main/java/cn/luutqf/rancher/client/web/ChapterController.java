@@ -56,7 +56,7 @@ public class ChapterController implements ChapterBaseController<Chapter> {
 
     @Override
     public Object logs(String id) {
-        return "";
+        return chapterService.logs(id);
     }
 
     @Override
