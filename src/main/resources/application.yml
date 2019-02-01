@@ -1,0 +1,25 @@
+#rancher.accessKey=7DCF4AB1D5B5AA007CDC
+#rancher.secretKey=hpvUwvwgT1E6eaEAPBJYVhXw814JF24XUbfa7omF
+#rancher.host=http://192.168.20.112
+#rancher.port=8070
+#rancher.projectId=1a5
+#rancher.deleteTimeDefault=60
+#server.port=8990
+rancher:
+#    accessKey: 607D20C33A9B0AEDB503
+#    secretKey: XNCZdDzpJNysfmZMVhwY9PXoRGCCffUkfA9nuarv
+#    host: http://114.11.99.16
+    accessKey: 7DCF4AB1D5B5AA007CDC
+    secretKey: hpvUwvwgT1E6eaEAPBJYVhXw814JF24XUbfa7omF
+    host: http://192.168.20.112
+    port: 8070
+    projectId: 1a5
+    deleteTimeDefault: 60
+server:
+    port: 8990
+
+spring:
+    redis:
+        host: 114.116.99.165
+        port: 6379
+        password: luutqf

@@ -3,6 +3,7 @@ package cn.luutqf.rancher.client.web;
 import cn.luutqf.rancher.client.entity.MyContainer;
 import cn.luutqf.rancher.client.service.ContainerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -40,7 +41,7 @@ public class ContainerController implements ContainerBaseController<MyContainer>
 
     @Override
     public Object startByName(String name) {
-        return null;
+        return containerService.startByName(name);
     }
 
     @Override
@@ -50,7 +51,11 @@ public class ContainerController implements ContainerBaseController<MyContainer>
 
     @Override
     public Object stopByName(String name) {
-        return null;
+        return containerService.stopByName(name);
+    }
+
+    public Object findByName(String name){
+        return containerService.findByName(name);
     }
 
     @Override

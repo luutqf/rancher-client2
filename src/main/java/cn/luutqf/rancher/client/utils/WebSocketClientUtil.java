@@ -22,11 +22,13 @@ public class WebSocketClientUtil {
 
 
     //todo 函数式编程
-    public static Optional<WebSocketClient> getWebSocketClient(String uri,String key) {
+    public static Optional<WebSocketClient> getWebSocketClient(String uri, String key) {
         WebSocketClient client;
+
 
         try {
             client = new WebSocketClient(new URI(uri), new Draft_6455()) {
+                int count = 0;
 
                 @Override
                 public void onOpen(ServerHandshake serverHandshake) {
@@ -35,6 +37,10 @@ public class WebSocketClientUtil {
 
                 @Override
                 public void onMessage(String s) {
+                    //todo 这里不该这样
+                    if (++count >= 16) {
+                        this.close();
+                    }
                     LogsUtil.logMap2.get(key).append(s);
                 }
 

@@ -1,5 +1,6 @@
-package cn.luutqf.rancher.client.web;
+package cn.luutqf.rancher.client.web.container.chapter;
 
+import cn.luutqf.rancher.client.web.ContainerBaseController;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
@@ -8,7 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
  * @date: 2019/1/25
  * @description:
  */
-public interface ChapterBaseController<T> extends ContainerBaseController<T>{
+public interface ChapterBaseController<T> extends ContainerBaseController<T> {
 
     /**
      *

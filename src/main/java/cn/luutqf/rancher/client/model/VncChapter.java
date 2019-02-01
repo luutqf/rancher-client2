@@ -28,7 +28,7 @@ public class VncChapter extends Chapter {
 
     private String password;
 
-    private List<Integer> ports;
+    private List<String> ports;
 
 
 

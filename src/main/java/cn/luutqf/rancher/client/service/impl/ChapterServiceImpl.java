@@ -85,21 +85,27 @@ public class ChapterServiceImpl implements ChapterService<Chapter> {
 
     @Override
     public String logs(String id) {
-            return containerService.logs(id);
+        return containerService.logs(id);
     }
 
     @Override
     public Optional<String> findChapterUrl(String id) {
         Optional<String> url;
-        int i = MinRequestTime;
+        int i = 0;
         do {
             url = findChapterUrlUtil(id);
+            if (url.isPresent()) {
+                break;
+            }
             try {
-                Thread.sleep(i);
+                Thread.sleep(MinRequestTime);
             } catch (InterruptedException e) {
                 throw new RancherException(e.getMessage(), RancherException.CHAPTER_ERROR);
             }
-        } while ((i += i) < MaxRequestTime && !url.isPresent());
+
+//            log.info("这是获取的URL：{}", url);
+        } while ((++i) < 1500);
+        log.info("这是获取的URL：{}", url);
         return url;
     }
 
@@ -165,7 +171,7 @@ public class ChapterServiceImpl implements ChapterService<Chapter> {
         boolean j = StringUtils.isEmpty(c.getChapterName());
         boolean y = StringUtils.isEmpty(c.getSubjectName());
         if (!(i || k || j || y)) {
-            return Optional.of(c.getUsername() + "-" + c.getSubjectName() +"-" + c.getChapterName() + "-" + c.getImage().substring(c.getImage().indexOf("/") + 1));
+            return Optional.of(c.getUsername() + "-" + c.getSubjectName() + "-" + c.getChapterName() + "-" + c.getImage().substring(c.getImage().indexOf("/") + 1));
         } else {
             log.warn("Class Field の problem :{}", c.toString());
             return Optional.empty();

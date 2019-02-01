@@ -1,4 +1,4 @@
-package cn.luutqf.rancher.client.web;
+package cn.luutqf.rancher.client.web.container.chapter;
 
 import cn.luutqf.rancher.client.model.Chapter;
 import cn.luutqf.rancher.client.service.ChapterService;
@@ -52,6 +52,11 @@ public class ChapterController implements ChapterBaseController<Chapter> {
 
     public Object find(String id) {
         return chapterService.findById(id);
+    }
+
+    @Override
+    public Object findByName(String name) {
+        return null;
     }
 
     @Override

@@ -57,11 +57,15 @@ public class JupyterServiceImpl implements JupyterService {
 
 
         Optional<String> chapterContainerName = getChapterContainerName(jupyterChapter);
-        MyContainer build = MyContainer.builder().ports(Collections.singletonList(jupyterChapter.getTargetPort()))
-            .labels(new LinkedHashMap<String, Object>() {{
-                put(ContainerTTL, jupyterChapter.getTtl());
-            }}).dataVolumes(Collections.singletonList(NfsWorkSpace + getFilePath(jupyterChapter) + ":" + JupyterWorkSpace))
-            .volumeDriver(RancherVolumeDriver).imageUuid(jupyterChapter.getContainerType() + jupyterChapter.getImage())
+        MyContainer build = MyContainer.builder()
+            .ports(Collections.singletonList(jupyterChapter.getTargetPort()))
+//            .labels(new LinkedHashMap<String, Object>() {{
+//                put(ContainerTTL, jupyterChapter.getTtl());
+//            }})
+            .ttl(jupyterChapter.getTtl())
+            .dataVolumes(Collections.singletonList(NfsWorkSpace + getFilePath(jupyterChapter) + ":" + JupyterWorkSpace))
+            .volumeDriver(RancherVolumeDriver)
+            .imageUuid(jupyterChapter.getContainerType() + jupyterChapter.getImage())
             .build();
         chapterContainerName.ifPresent(build::setName);
         Optional<String> s = add(build).map(Container::getId);
@@ -72,11 +76,15 @@ public class JupyterServiceImpl implements JupyterService {
             Boolean copy;
             System.out.println(jupyterChapter.getFile());
             if (!StringUtils.isEmpty(jupyterChapter.getFile())) {
+                System.out.println(jupyterChapter.getFile());
                 copy = fileService.copy(jupyterChapter.getFile(), NfsPrefix + getFilePath(jupyterChapter) + "/" + JupyterDefaultFile);
 
             } else {
-                int i = Integer.valueOf(jupyterChapter.getChapterName()) % 8;
-                copy = fileService.copy("/nfs/test/mine/" + "01" + "/" + (i < 10 ? "0" + i : i + "") + "/default.ipynb", NfsPrefix + getFilePath(jupyterChapter) + "/" + JupyterDefaultFile);
+                int i = Integer.valueOf(jupyterChapter.getChapterName()) % 8 + 1;
+//                String s1 = "/nfs/test/mine/" + "01" + "/" + (i < 10 ? "0" + i : i + "") + "/default.ipynb";
+                String s1 = "/nfs/test/mine/" + "01" + "/10"  + "/default.ipynb";
+                System.out.println(s1);
+                copy = fileService.copy(s1, NfsPrefix + getFilePath(jupyterChapter) + "/" + JupyterDefaultFile);
             }
             log.info("创建文件操作：{}", copy);
         }
@@ -156,9 +164,15 @@ public class JupyterServiceImpl implements JupyterService {
     @Override
     public Optional<String> getToken(String id) {
         Optional<Container> container = chapterService.findById(id);
-        if (container.isPresent()) {
-            String logs = chapterService.logs(id);
-            return Optional.of(LogsUtil.getTokenByRegex3.apply(logs));
+        log.info("又找到了一个容器：{}",container.isPresent());
+        if (container.isPresent()){
+            String apply;
+            do {
+                String logs = chapterService.logs(id);
+                apply = LogsUtil.getTokenByRegex3.apply(logs);
+            }while (StringUtils.isEmpty(apply));
+
+            return Optional.of(apply);
         }
         return Optional.empty();
     }

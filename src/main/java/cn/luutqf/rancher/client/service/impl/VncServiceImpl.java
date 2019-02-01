@@ -16,6 +16,7 @@ import retrofit2.Response;
 import java.util.*;
 
 import static cn.luutqf.rancher.client.constant.BasicParameter.*;
+import static cn.luutqf.rancher.client.constant.Constants.CONSOL_VNC_PASSWD;
 import static cn.luutqf.rancher.client.constant.Constants.VNC_PASSWD;
 
 /**
@@ -41,19 +42,34 @@ public class VncServiceImpl implements VncService {
     }
 
     public Optional<String> createChapter(VncChapter vncChapter) {
+        System.out.println(vncChapter.getImage());
         Optional<String> chapterContainerName = getChapterContainerName(vncChapter);
         MyContainer build = MyContainer.builder()
-            .ports(Collections.singletonList(vncChapter.getTargetPort()))
-            .labels(new LinkedHashMap<String, Object>() {{
-                put(ContainerTTL, vncChapter.getTtl());
-            }})
+//            .ports(Arrays.asList(vncChapter.getTargetPort()))
+//            .labels(new LinkedHashMap<String, Object>() {{
+//                put(ContainerTTL, vncChapter.getTtl());
+//            }})
+            .ttl(vncChapter.getTtl())
             .environment(new LinkedHashMap<String, Object>() {{
                 put(VNC_PASSWD, vncChapter.getPassword());
+                put(CONSOL_VNC_PASSWD, vncChapter.getPassword());
+                put("VNC_RESOLUTION", "1280x720");
             }})
             .imageUuid(vncChapter.getContainerType() + vncChapter.getImage())
             .build();
         chapterContainerName.ifPresent(build::setName);
-
+        List<String> ports = new ArrayList<>();
+        if(Optional.ofNullable(vncChapter.getTargetPort()).isPresent()){
+            ports.add(vncChapter.getTargetPort());
+        }else{
+            ports.add("80");
+        }
+        if(Optional.ofNullable(vncChapter.getPorts()).isPresent()){
+            if (!vncChapter.getPorts().isEmpty()){
+                ports.addAll(vncChapter.getPorts());
+            }
+        }
+        build.setPorts(ports);
         return add(build).map(Container::getId);
     }
 

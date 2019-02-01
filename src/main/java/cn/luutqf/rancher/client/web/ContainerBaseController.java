@@ -65,6 +65,9 @@ public interface ContainerBaseController<T> {
     @GetMapping
     Object find( String id);
 
+    @GetMapping("name")
+    Object findByName(String name);
+
     /**
      *
      * @param id
